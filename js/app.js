@@ -9,6 +9,9 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // 3. Setup global event handlers
     setupGlobalEvents();
+
+    // 4. Setup mobile drawer navigation
+    initMobileNav();
 });
 
 // Theme Logic
@@ -146,6 +149,12 @@ function navigateTo(viewId) {
         activeView.classList.add("active");
     }
 
+    // Close mobile drawer if open
+    const sidebar = document.querySelector(".sidebar");
+    if (sidebar) {
+        sidebar.classList.remove("open");
+    }
+
     // 3. Dynamically set Header title matching views
     const viewTitleMappings = {
         "district-dashboard-view": "District Dashboard",
@@ -190,4 +199,33 @@ function setupGlobalEvents() {
         });
     });
 }
+
+// Mobile navigation drawer toggle wire-up
+function initMobileNav() {
+    const sidebar = document.querySelector(".sidebar");
+    const menuToggleBtn = document.getElementById("menu-toggle-btn");
+    const menuCloseBtn = document.getElementById("menu-close-btn");
+
+    if (menuToggleBtn && sidebar) {
+        menuToggleBtn.addEventListener("click", () => {
+            sidebar.classList.add("open");
+        });
+    }
+
+    if (menuCloseBtn && sidebar) {
+        menuCloseBtn.addEventListener("click", () => {
+            sidebar.classList.remove("open");
+        });
+    }
+
+    // Close drawer when clicking outside the sidebar on mobile
+    document.addEventListener("click", (e) => {
+        if (window.innerWidth <= 768 && sidebar.classList.contains("open")) {
+            if (!sidebar.contains(e.target) && !menuToggleBtn.contains(e.target)) {
+                sidebar.classList.remove("open");
+            }
+        }
+    });
+}
+
 window.navigateTo = navigateTo;

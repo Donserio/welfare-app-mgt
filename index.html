@@ -13,9 +13,14 @@
     <div id="app-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
-            <div class="sidebar-logo">
-                <div class="logo-icon">L</div>
-                <div class="logo-text">Lajna Welfare</div>
+            <div class="sidebar-logo" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="logo-icon">L</div>
+                    <div class="logo-text">Lajna Welfare</div>
+                </div>
+                <button class="mobile-nav-toggle" id="menu-close-btn" style="border: none; background: none; font-size: 1.25rem; cursor: pointer; color: var(--text-muted);" aria-label="Close Menu">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
             
             <ul class="sidebar-menu" id="sidebar-menu-items">
@@ -38,8 +43,11 @@
         <main class="main-content">
             <!-- Top Sticky Glassmorphic Header -->
             <header class="top-header">
-                <div class="header-title-area">
-                    <h2 id="current-view-title">Dashboard</h2>
+                <div class="header-title-area" style="display: flex; align-items: center; gap: 12px;">
+                    <button class="mobile-nav-toggle" id="menu-toggle-btn" aria-label="Open Menu">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h2 id="current-view-title" style="font-size: 1.25rem;">Dashboard</h2>
                 </div>
                 
                 <div class="header-actions">
