@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welfare Management and Reporting System | Lajna Imaillah Nigeria</title>
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-icon">L</div>
+                <div class="logo-text">Lajna Welfare</div>
+            </div>
+            
+            <ul class="sidebar-menu" id="sidebar-menu-items">
+                <!-- Dynamically populated based on active role -->
+            </ul>
+            
+            <!-- Sidebar Footer Active Profile Details -->
+            <div class="sidebar-footer">
+                <div class="profile-card">
+                    <div class="avatar" id="user-avatar">A</div>
+                    <div class="profile-info">
+                        <div class="profile-name" id="user-name">Sister Aishat Bello</div>
+                        <div class="profile-role" id="user-role-label">District Secretary</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <main class="main-content">
+            <!-- Top Sticky Glassmorphic Header -->
+            <header class="top-header">
+                <div class="header-title-area">
+                    <h2 id="current-view-title">Dashboard</h2>
+                </div>
+                
+                <div class="header-actions">
+                    <!-- Interactive Role Selector Widget -->
+                    <div class="role-switcher-container">
+                        <span class="role-switcher-label">Simulate Role:</span>
+                        <select class="role-select" id="role-selector-dropdown">
+                            <optgroup label="District Secretaries (Ogun)">
+                                <option value="district-2-1">District: Ayetoro</option>
+                                <option value="district-2-2">District: Ogun Waterside</option>
+                                <option value="district-2-3">District: Abeokuta</option>
+                            </optgroup>
+                            <optgroup label="Regional Secretaries">
+                                <option value="region-2">Region 2 (Ogun)</option>
+                                <option value="region-1">Region 1 (Lagos)</option>
+                                <option value="region-3">Region 3 (Oyo)</option>
+                            </optgroup>
+                            <optgroup label="National Secretariat">
+                                <option value="national">National Welfare Administrator</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <!-- Theme Toggle Button -->
+                    <button class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle dark/light theme">
+                        <i class="fa-solid fa-moon" id="theme-icon"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Active View Layouts -->
+            <div class="page-container" id="page-content-area">
+                
+                <!-- VIEW 1: DISTRICT DASHBOARD -->
+                <section id="district-dashboard-view" class="tab-content">
+                    <div class="custom-alert custom-alert-info" id="district-revision-alert" style="display:none;">
+                        <i class="fa-solid fa-circle-exclamation" style="font-size: 1.25rem;"></i>
+                        <div>
+                            <div class="custom-alert-title">Corrections Requested</div>
+                            <div class="custom-alert-desc" id="district-revision-comment-text">Your report requires updates. Please check feedback and resubmit.</div>
+                        </div>
+                    </div>
+
+                    <div class="card-grid">
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <span>Total Lajna Members</span>
+                                <div class="metric-icon-box"><i class="fa-solid fa-users"></i></div>
+                            </div>
+                            <div class="metric-value" id="dist-metric-members">0</div>
+                            <div class="metric-footer">District Population</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <span>Aged & Widows</span>
+                                <div class="metric-icon-box"><i class="fa-solid fa-heart-pulse"></i></div>
+                            </div>
+                            <div class="metric-value" id="dist-metric-vulnerable">0</div>
+                            <div class="metric-footer">
+                                <span id="dist-metric-aged-count">0</span> Aged • <span id="dist-metric-widows-count">0</span> Widows
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <span>Report Status (May 2026)</span>
+                                <div class="metric-icon-box" id="dist-status-icon-box"><i class="fa-solid fa-file-signature"></i></div>
+                            </div>
+                            <div class="metric-value" style="font-size: 1.5rem; margin-top: 8px;" id="dist-metric-report-status">Not Started</div>
+                            <div class="metric-footer" id="dist-metric-report-date">Welfare Report</div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid-2">
+                        <!-- Submit Action Card -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fa-solid fa-clipboard-list"></i> Monthly Reporting</h3>
+                            </div>
+                            <div class="card-body" style="text-align: center; padding: 40px 24px;">
+                                <i class="fa-solid fa-file-invoice" style="font-size: 4rem; color: var(--primary-light); margin-bottom: 20px; display: block;"></i>
+                                <h4 style="margin-bottom: 12px;" id="dist-report-card-title">Submit May 2026 Report</h4>
+                                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                                    Submit your monthly membership figures, welfare assistance collections, events, outings, projects, and summaries to the region.
+                                </p>
+                                <button class="btn btn-primary" id="dist-start-report-btn">
+                                    <i class="fa-solid fa-pen-to-square"></i> Begin Data Entry
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Recent Submissions History -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fa-solid fa-history"></i> Recent Submissions</h3>
+                            </div>
+                            <div class="card-body" style="padding: 0;">
+                                <div class="table-responsive">
+                                    <table class="custom-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Month/Year</th>
+                                                <th>Submitted By</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="district-recent-reports-table">
+                                            <!-- Dynamically populated -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 2: REGIONAL DASHBOARD -->
+                <section id="regional-dashboard-view" class="tab-content">
+                    <!-- Regional Dashboard Filters -->
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; background: var(--surface); padding: 12px 20px; border-radius: var(--radius-md); border: 1px solid var(--border);">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="role-switcher-label" style="padding: 0; font-size: 0.8rem;">Period:</span>
+                            <select class="form-control" id="reg-filter-month" style="width: auto; padding: 6px 12px; font-size: 0.85rem;">
+                                <option value="1">January</option>
+                                <option value="2">February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5" selected>May</option>
+                                <option value="6">June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                            <select class="form-control" id="reg-filter-year" style="width: auto; padding: 6px 12px; font-size: 0.85rem;">
+                                <option value="2026" selected>2026</option>
+                                <option value="2027">2027</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="card-grid">
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <span>Districts Reporting</span>
+                                <div class="metric-icon-box"><i class="fa-solid fa-chart-pie"></i></div>
+                            </div>
+                            <div class="metric-value" id="reg-metric-reporting">0/0</div>
+                            <div class="metric-footer">Submission Progress (May 2026)</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <span>Welfare Spending</span>
+                                <div class="metric-icon-box"><i class="fa-solid fa-money-bill-wave"></i></div>
+                            </div>
+                            <div class="metric-value" id="reg-metric-spending">₦0</div>
+                            <div class="metric-footer">Total Regional Spend This Month</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <span>Welfare Dues & Donations</span>
+                                <div class="metric-icon-box"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                            </div>
+                            <div class="metric-value" id="reg-metric-collections">₦0</div>
+                            <div class="metric-footer">Total Funds Collected</div>
+                        </div>
+                    </div>
+
+                    <!-- Submission Checklist & Approvals Grid -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fa-solid fa-list-check"></i> District Submission Checklist (May 2026)</h3>
+                            <div>
+                                <button class="btn btn-secondary btn-sm" id="export-regional-summary-csv">
+                                    <i class="fa-solid fa-file-csv"></i> Export Summary CSV
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <div class="table-responsive">
+                                <table class="custom-table">
+                                    <thead>
+                                        <tr>
+                                            <th>District Name</th>
+                                            <th>Submission Date</th>
+                                            <th>Email Address</th>
+                                            <th>Welfare Spend</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="regional-district-checklist-table">
+                                        <!-- Dynamically populated -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Regional Summary Table (matching user template exactly) -->
+                    <div class="dashboard-card" id="regional-summary-table-card">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fa-solid fa-table"></i> Regional Summary Table (May 2026)</h3>
+                            <span class="badge badge-approved" id="regional-summary-indicator">2 Approved Districts Included</span>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <div class="table-responsive">
+                                <table class="custom-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Welfare Indicator</th>
+                                            <th style="text-align: right; padding-right: 40px;">Consolidated Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="regional-summary-metrics-rows">
+                                        <!-- Seeds metrics dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 3: NATIONAL DASHBOARD -->
+                <section id="national-dashboard-view" class="tab-content">
+                    <!-- National Dashboard Filters -->
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; background: var(--surface); padding: 12px 20px; border-radius: var(--radius-md); border: 1px solid var(--border);">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="role-switcher-label" style="padding: 0; font-size: 0.8rem;">Period:</span>
+                            <select class="form-control" id="nat-filter-month" style="width: auto; padding: 6px 12px; font-size: 0.85rem;">
+                                <option value="1">January</option>
+                                <option value="2">February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5" selected>May</option>
+                                <option value="6">June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                            <select class="form-control" id="nat-filter-year" style="width: auto; padding: 6px 12px; font-size: 0.85rem;">
+                                <option value="2026" selected>2026</option>
+                                <option value="2027">2027</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="card-grid">
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <span>National Reporting Rate</span>
+                                <div class="metric-icon-box"><i class="fa-solid fa-globe"></i></div>
+                            </div>
+                            <div class="metric-value" id="nat-metric-rate">0%</div>
+                            <div class="metric-footer" id="nat-metric-sub-detail">0/0 Districts Active</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <span>National Collections</span>
+                                <div class="metric-icon-box"><i class="fa-solid fa-sack-dollar"></i></div>
+                            </div>
+                            <div class="metric-value" id="nat-metric-collections">₦0</div>
+                            <div class="metric-footer">Total Funds Across All Regions</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <span>Total Beneficiaries Supported</span>
+                                <div class="metric-icon-box"><i class="fa-solid fa-hand-holding-heart"></i></div>
+                            </div>
+                            <div class="metric-value" id="nat-metric-beneficiaries">0</div>
+                            <div class="metric-footer">Widows, Orphans & Vulnerable Supported</div>
+                        </div>
+                    </div>
+
+                    <!-- Collections vs Spending Comparison Chart -->
+                    <div class="dashboard-grid-2">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fa-solid fa-chart-column"></i> Financial Comparison by Region (May 2026)</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container" id="national-financial-chart">
+                                    <!-- Rendered dynamically via SVG in JS -->
+                                </div>
+                                <div class="chart-legend">
+                                    <div class="legend-item">
+                                        <div class="legend-color" style="background-color: var(--primary);"></div>
+                                        <span>Total Collections</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-color" style="background-color: var(--accent);"></div>
+                                        <span>Total Spending</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Regional Performance Summary Grid -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fa-solid fa-ranking-star"></i> Region Submission Progress</h3>
+                            </div>
+                            <div class="card-body" style="padding: 0;">
+                                <div class="table-responsive">
+                                    <table class="custom-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Region</th>
+                                                <th>Active Districts</th>
+                                                <th>Submissions</th>
+                                                <th>Approval Rate</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="national-region-progress-table">
+                                            <!-- Dynamically populated -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 4: ALL REPORTS DIRECTORY (ADMINS) -->
+                <section id="reports-directory-view" class="tab-content">
+                    <div class="dashboard-card">
+                        <div class="card-header" style="flex-wrap: wrap; gap: 16px;">
+                            <h3 class="card-title"><i class="fa-solid fa-folder-open"></i> Submissions Directory</h3>
+                            
+                            <!-- Search & Filter Controls -->
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                <select class="form-control" id="dir-filter-region" style="width: auto; padding: 6px 12px; font-size: 0.85rem;">
+                                    <option value="all">All Regions</option>
+                                </select>
+                                <select class="form-control" id="dir-filter-status" style="width: auto; padding: 6px 12px; font-size: 0.85rem;">
+                                    <option value="all">All Statuses</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="pending">Pending Review</option>
+                                    <option value="revision">Needs Revision</option>
+                                    <option value="draft">Draft</option>
+                                </select>
+                                <select class="form-control" id="dir-filter-month" style="width: auto; padding: 6px 12px; font-size: 0.85rem;">
+                                    <option value="all">All Months</option>
+                                    <option value="1">January</option>
+                                    <option value="2">February</option>
+                                    <option value="3">March</option>
+                                    <option value="4">April</option>
+                                    <option value="5" selected>May</option>
+                                    <option value="6">June</option>
+                                    <option value="7">July</option>
+                                    <option value="8">August</option>
+                                    <option value="9">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                                <select class="form-control" id="dir-filter-year" style="width: auto; padding: 6px 12px; font-size: 0.85rem;">
+                                    <option value="all">All Years</option>
+                                    <option value="2026" selected>2026</option>
+                                    <option value="2027">2027</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <div class="table-responsive">
+                                <table class="custom-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Region</th>
+                                            <th>District</th>
+                                            <th>Month/Year</th>
+                                            <th>Submitted By</th>
+                                            <th>Total Spend</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="directory-reports-table">
+                                        <!-- Dynamically populated -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 5: BENEFICIARY DATABASE -->
+                <section id="beneficiaries-view" class="tab-content">
+                    <div class="dashboard-card">
+                        <div class="card-header" style="flex-wrap: wrap; gap: 16px;">
+                            <h3 class="card-title"><i class="fa-solid fa-users-viewfinder"></i> Beneficiary Database</h3>
+                            
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                <input type="text" class="form-control" id="ben-search-box" placeholder="Search by name/phone..." style="width: 200px; padding: 6px 12px; font-size: 0.85rem;">
+                                <select class="form-control" id="ben-filter-category" style="width: auto; padding: 6px 12px; font-size: 0.85rem;">
+                                    <option value="all">All Categories</option>
+                                    <option value="Widow">Widows</option>
+                                    <option value="Orphan">Orphans</option>
+                                    <option value="Elderly">Elderly</option>
+                                    <option value="Sick/Disabled">Sick/Disabled</option>
+                                    <option value="Financial">Financially Challenged</option>
+                                    <option value="Student">Student Support</option>
+                                </select>
+                                <button class="btn btn-primary btn-sm" id="add-beneficiary-btn">
+                                    <i class="fa-solid fa-user-plus"></i> Add Beneficiary
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <div class="table-responsive">
+                                <table class="custom-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Beneficiary Name</th>
+                                            <th>Welfare Category</th>
+                                            <th>District</th>
+                                            <th>Phone Number</th>
+                                            <th>Contact Address</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="beneficiary-records-table">
+                                        <!-- Seeded dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 7: SUPPLEMENTARY REPORTS PORTAL (REGIONAL/NATIONAL) -->
+                <section id="supplementary-reports-view" class="tab-content">
+                    
+                    <!-- SUB-VIEW A: LIST OF SUPPLEMENTARY REPORTS -->
+                    <div id="supplementary-list-panel" class="dashboard-card">
+                        <div class="card-header" style="flex-wrap: wrap; gap: 16px;">
+                            <h3 class="card-title"><i class="fa-solid fa-folder-open"></i> Created Supplementary Reports</h3>
+                            <button class="btn btn-primary btn-sm" id="create-supp-report-btn">
+                                <i class="fa-solid fa-plus"></i> New Supplementary Report
+                            </button>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <div class="table-responsive">
+                                <table class="custom-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Report Title</th>
+                                            <th>Region / Owner</th>
+                                            <th>Reporting Period</th>
+                                            <th>Fields Count</th>
+                                            <th>Date Created</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="supplementary-reports-table-body">
+                                        <!-- Rendered dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SUB-VIEW B: CREATE DYNAMIC REPORT FORM BUILDER -->
+                    <div id="supplementary-form-panel" class="dashboard-card" style="display: none;">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fa-solid fa-file-signature"></i> Dynamic Supplementary Form Builder</h3>
+                            <button class="btn btn-secondary btn-sm" id="cancel-supp-report-btn">
+                                <i class="fa-solid fa-arrow-left"></i> Back to List
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <form id="supplementary-report-form" onsubmit="event.preventDefault();">
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Report Title <span class="required">*</span></label>
+                                    <input type="text" class="form-control" id="supp-form-title" required placeholder="e.g., Q2 Regional Health Camp Report">
+                                </div>
+
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label class="form-label">Region Context</label>
+                                        <input type="text" class="form-control" id="supp-form-region" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Submitted By</label>
+                                        <input type="text" class="form-control" id="supp-form-by" readonly>
+                                    </div>
+                                </div>
+
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label class="form-label">Reporting Month <span class="required">*</span></label>
+                                        <select class="form-control" id="supp-form-month" required>
+                                            <option value="1">January</option>
+                                            <option value="2">February</option>
+                                            <option value="3">March</option>
+                                            <option value="4">April</option>
+                                            <option value="5" selected>May</option>
+                                            <option value="6">June</option>
+                                            <option value="7">July</option>
+                                            <option value="8">August</option>
+                                            <option value="9">September</option>
+                                            <option value="10">October</option>
+                                            <option value="11">November</option>
+                                            <option value="12">December</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Reporting Year <span class="required">*</span></label>
+                                        <select class="form-control" id="supp-form-year" required>
+                                            <option value="2026" selected>2026</option>
+                                            <option value="2027">2027</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Dynamic Field List Header & Add buttons -->
+                                <div style="margin-top: 30px; margin-bottom: 16px; border-bottom: 2px solid var(--border); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                    <h4 style="color: var(--primary);"><i class="fa-solid fa-square-plus"></i> Form Fields & Answers</h4>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button type="button" class="btn btn-secondary btn-sm" id="supp-add-preset-field-btn">
+                                            <i class="fa-solid fa-list-ul"></i> Add Standard Preset
+                                        </button>
+                                        <button type="button" class="btn btn-primary btn-sm" id="supp-add-custom-field-btn">
+                                            <i class="fa-solid fa-plus"></i> Add Custom Field
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="supp-form-fields-repeater-container">
+                                    <!-- Dynamic fields inserted here -->
+                                </div>
+
+                                <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 12px;">
+                                    <button type="button" class="btn btn-secondary" id="supp-form-cancel-btn">Cancel</button>
+                                    <button type="submit" class="btn btn-accent" id="supp-form-submit-btn"><i class="fa-solid fa-paper-plane"></i> Save & Submit Report</button>
+                                </div>
+
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 6: FORM WIZARD REPORT SUBMISSION -->
+                <section id="report-submission-view" class="tab-content">
+                    <div class="wizard-container">
+                        <!-- Step Indicator bubbles -->
+                        <div class="wizard-progress" id="wizard-progress-headers">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+
+                        <!-- Form Main Body Wrapper -->
+                        <form id="welfare-report-form" onsubmit="event.preventDefault();">
+                            <div class="wizard-body">
+                                
+                                <!-- STEP 1: REPORT INFO -->
+                                <div class="wizard-step-content active" data-step="1">
+                                    <h3 style="margin-bottom: 20px; color: var(--primary);"><i class="fa-solid fa-info-circle"></i> Section 1: Reporting Information</h3>
+                                    
+                                    <div class="form-row-2">
+                                        <div class="form-group">
+                                            <label class="form-label">Region</label>
+                                            <input type="text" class="form-control" id="form-info-region" readonly>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">District Name</label>
+                                            <input type="text" class="form-control" id="form-info-district" readonly>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row-2">
+                                        <div class="form-group">
+                                            <label class="form-label">Reporting Month <span class="required">*</span></label>
+                                            <select class="form-control" id="form-info-month" required>
+                                                <option value="1">January</option>
+                                                <option value="2">February</option>
+                                                <option value="3">March</option>
+                                                <option value="4">April</option>
+                                                <option value="5" selected>May</option>
+                                                <option value="6">June</option>
+                                                <option value="7">July</option>
+                                                <option value="8">August</option>
+                                                <option value="9">September</option>
+                                                <option value="10">October</option>
+                                                <option value="11">November</option>
+                                                <option value="12">December</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Reporting Year <span class="required">*</span></label>
+                                            <select class="form-control" id="form-info-year" required>
+                                                <option value="2026" selected>2026</option>
+                                                <option value="2027">2027</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row-2">
+                                        <div class="form-group">
+                                            <label class="form-label">Muqami Welfare Secretary Name <span class="required">*</span></label>
+                                            <input type="text" class="form-control" id="form-info-secretary" required placeholder="Full Name">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Muqami President Name <span class="required">*</span></label>
+                                            <input type="text" class="form-control" id="form-info-president" required placeholder="Full Name">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Welfare Email Address <span class="required">*</span></label>
+                                        <input type="email" class="form-control" id="form-info-email" required placeholder="email@lajna.ng">
+                                    </div>
+                                </div>
+
+                                <!-- STEP 2: MEMBERSHIP STATS -->
+                                <div class="wizard-step-content" data-step="2">
+                                    <h3 style="margin-bottom: 20px; color: var(--primary);"><i class="fa-solid fa-users"></i> Section 2: Membership Statistics</h3>
+                                    
+                                    <div class="form-row-2">
+                                        <div class="form-group">
+                                            <label class="form-label">Total Lajna Members <span class="required">*</span></label>
+                                            <input type="number" class="form-control" id="form-stats-members" required min="0" placeholder="Enter number only">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Number of Aged Lajna <span class="required">*</span></label>
+                                            <input type="number" class="form-control" id="form-stats-aged" required min="0" placeholder="Enter number only">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row-2">
+                                        <div class="form-group">
+                                            <label class="form-label">Number of Widows <span class="required">*</span></label>
+                                            <input type="number" class="form-control" id="form-stats-widows" required min="0" placeholder="Enter number only">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Number of Orphans <span class="required">*</span></label>
+                                            <input type="number" class="form-control" id="form-stats-orphans" required min="0" placeholder="Enter number only">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- STEP 3: FINANCIAL COLLECTIONS -->
+                                <div class="wizard-step-content" data-step="3">
+                                    <h3 style="margin-bottom: 20px; color: var(--primary);"><i class="fa-solid fa-sack-dollar"></i> Section 3: Welfare Collections</h3>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Opening Balance (₦) <span class="required">*</span></label>
+                                        <input type="number" class="form-control" id="form-fin-opening" required min="0" value="0" placeholder="Enter NGN amount">
+                                        <span class="form-control-helper">Leftover funds from previous month</span>
+                                    </div>
+
+                                    <div class="form-row-2">
+                                        <div class="form-group">
+                                            <label class="form-label">Monthly Welfare Due Collected (₦300 per Halqa) <span class="required">*</span></label>
+                                            <input type="number" class="form-control" id="form-fin-due" required min="0" placeholder="Enter amount (numbers only)">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Other Donations / Support Received (₦) <span class="required">*</span></label>
+                                            <input type="number" class="form-control" id="form-fin-extra" required min="0" placeholder="Enter amount (numbers only)">
+                                        </div>
+                                    </div>
+
+                                    <div class="custom-alert custom-alert-info" style="margin-top: 24px;">
+                                        <i class="fa-solid fa-calculator" style="font-size: 1.25rem;"></i>
+                                        <div>
+                                            <div class="custom-alert-title">Estimated Total Funds Available</div>
+                                            <div class="custom-alert-desc" id="form-fin-total-calc">₦0</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- STEP 4: ASSISTANCE PROVIDED -->
+                                <div class="wizard-step-content" data-step="4">
+                                    <h3 style="margin-bottom: 20px; color: var(--primary);"><i class="fa-solid fa-hand-holding-heart"></i> Section 4: Welfare Assistance Provided</h3>
+                                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+                                        Add records for each assistance category provided this month (e.g. Widow Support, Orphan Support, Hospital Visits).
+                                    </p>
+                                    
+                                    <div class="repeating-grid-container" id="form-assistance-repeater">
+                                        <!-- Dynamic Row Insertion -->
+                                    </div>
+
+                                    <button type="button" class="btn btn-secondary btn-sm" id="form-assistance-add-btn">
+                                        <i class="fa-solid fa-plus"></i> Add Assistance Record
+                                    </button>
+                                </div>
+
+                                <!-- STEP 5: SOCIAL OUTINGS -->
+                                <div class="wizard-step-content" data-step="5">
+                                    <h3 style="margin-bottom: 20px; color: var(--primary);"><i class="fa-solid fa-calendar-check"></i> Section 5: Social Welfare Outings</h3>
+                                    
+                                    <div class="repeating-grid-container" id="form-outings-repeater">
+                                        <!-- Dynamic Row Insertion -->
+                                    </div>
+
+                                    <button type="button" class="btn btn-secondary btn-sm" id="form-outings-add-btn">
+                                        <i class="fa-solid fa-plus"></i> Add Social Outing Record
+                                    </button>
+                                </div>
+
+                                <!-- STEP 6: MAJOR PROJECTS -->
+                                <div class="wizard-step-content" data-step="6">
+                                    <h3 style="margin-bottom: 20px; color: var(--primary);"><i class="fa-solid fa-compass-drafting"></i> Section 6: Major Projects of the Month</h3>
+                                    
+                                    <div class="repeating-grid-container" id="form-projects-repeater">
+                                        <!-- Dynamic Project Insertion -->
+                                    </div>
+
+                                    <button type="button" class="btn btn-secondary btn-sm" id="form-projects-add-btn">
+                                        <i class="fa-solid fa-plus"></i> Add Project Record
+                                    </button>
+                                </div>
+
+                                <!-- STEP 7: VISITS & OUTREACH -->
+                                <div class="wizard-step-content" data-step="7">
+                                    <h3 style="margin-bottom: 20px; color: var(--primary);"><i class="fa-solid fa-house-chimney-medical"></i> Section 7: Visits & Outreach</h3>
+                                    
+                                    <div class="form-row-2">
+                                        <div class="form-group">
+                                            <label class="form-label">Home Visits Conducted <span class="required">*</span></label>
+                                            <input type="number" class="form-control" id="form-visits-home" required min="0" placeholder="0">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Hospital Visits Conducted <span class="required">*</span></label>
+                                            <input type="number" class="form-control" id="form-visits-hospital" required min="0" placeholder="0">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row-2">
+                                        <div class="form-group">
+                                            <label class="form-label">Elderly / Housebound Visits <span class="required">*</span></label>
+                                            <input type="number" class="form-control" id="form-visits-elderly" required min="0" placeholder="0">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Community Service Activities Conducted <span class="required">*</span></label>
+                                            <input type="number" class="form-control" id="form-visits-community" required min="0" placeholder="0">
+                                            <span class="form-control-helper">Helping neighbours/relatives</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Mosque Cleaning Support Done? <span class="required">*</span></label>
+                                        <select class="form-control" id="form-visits-mosque-cleaning" required>
+                                            <option value="Yes">Yes</option>
+                                            <option value="No" selected>No</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- STEP 8: SKILLS & EMPOWERMENT -->
+                                <div class="wizard-step-content" data-step="8">
+                                    <h3 style="margin-bottom: 20px; color: var(--primary);"><i class="fa-solid fa-graduation-cap"></i> Section 8: Skills & Empowerment</h3>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Did you hold any skill acquisition program or training this month? <span class="required">*</span></label>
+                                        <select class="form-control" id="form-skills-held" required>
+                                            <option value="Yes">Yes</option>
+                                            <option value="No" selected>No</option>
+                                        </select>
+                                    </div>
+
+                                    <div id="form-skills-details-panel" style="display: none;">
+                                        <div class="form-row-2">
+                                            <div class="form-group">
+                                                <label class="form-label">Type/Title of Skill Program</label>
+                                                <input type="text" class="form-control" id="form-skills-title" placeholder="e.g. Handwash Production">
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Training Category</label>
+                                                <input type="text" class="form-control" id="form-skills-category" placeholder="e.g. Soap Making, Tailoring">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row-2">
+                                            <div class="form-group">
+                                                <label class="form-label">Number of Participants</label>
+                                                <input type="number" class="form-control" id="form-skills-participants" min="0" placeholder="0">
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Duration of Program</label>
+                                                <input type="text" class="form-control" id="form-skills-duration" placeholder="e.g. 2 Hours, 1 Day">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row-2" style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
+                                        <div class="form-group">
+                                            <label class="form-label">Women Assisted with Starter Packs</label>
+                                            <input type="number" class="form-control" id="form-skills-packs" min="0" placeholder="0">
+                                            <span class="form-control-helper">To help eradicate unemployment</span>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Estimated Value of Starter Packs (₦)</label>
+                                            <input type="number" class="form-control" id="form-skills-packs-value" min="0" placeholder="0">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- STEP 9: EDUCATION SUPPORT -->
+                                <div class="wizard-step-content" data-step="9">
+                                    <h3 style="margin-bottom: 20px; color: var(--primary);"><i class="fa-solid fa-book-open"></i> Section 9: Education Support</h3>
+                                    
+                                    <div class="form-row-2">
+                                        <div class="form-group">
+                                            <label class="form-label">Children Sponsored on Scholarship/Apprenticeship <span class="required">*</span></label>
+                                            <input type="number" class="form-control" id="form-edu-sponsored" required min="0" placeholder="0">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Women Attending Literacy Classes <span class="required">*</span></label>
+                                            <input type="number" class="form-control" id="form-edu-literacy" required min="0" placeholder="0">
+                                            <span class="form-control-helper">Put 0 if none held</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Did you distribute school supplies this month? <span class="required">*</span></label>
+                                        <select class="form-control" id="form-edu-supplies" required>
+                                            <option value="Yes">Yes</option>
+                                            <option value="No" selected>No</option>
+                                        </select>
+                                    </div>
+
+                                    <div id="form-edu-supplies-details-panel" style="display: none;" class="form-row-2">
+                                        <div class="form-group">
+                                            <label class="form-label">Number of School Supplies Beneficiaries</label>
+                                            <input type="number" class="form-control" id="form-edu-supplies-beneficiaries" min="0" placeholder="0">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Brief Description of Supplies Distributed</label>
+                                            <input type="text" class="form-control" id="form-edu-supplies-desc" placeholder="e.g. Notebooks, bags">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- STEP 10: SUMMARY & NOTES -->
+                                <div class="wizard-step-content" data-step="10">
+                                    <h3 style="margin-bottom: 20px; color: var(--primary);"><i class="fa-solid fa-feather-pointed"></i> Section 10: Monthly Summary & Notes</h3>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Key Achievements / Success Stories <span class="required">*</span></label>
+                                        <textarea class="form-control" id="form-sum-achievements" required rows="4" placeholder="Briefly highlight key achievements or success stories this month..."></textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Challenges Faced (if any)</label>
+                                        <textarea class="form-control" id="form-sum-challenges" rows="3" placeholder="Describe any roadblocks, financial limits, or structural issues..."></textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Welfare Support / Resources Needed</label>
+                                        <textarea class="form-control" id="form-sum-support" rows="3" placeholder="What does the district need from the regional/national secretariat?"></textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Additional Remarks</label>
+                                        <textarea class="form-control" id="form-sum-remarks" rows="2" placeholder="Any final remarks..."></textarea>
+                                    </div>
+                                </div>
+
+                            </div>
+                            
+                            <!-- Wizard Navigation Footer -->
+                            <div class="wizard-footer">
+                                <button type="button" class="btn btn-secondary" id="wizard-prev-btn"><i class="fa-solid fa-arrow-left"></i> Previous</button>
+                                <div>
+                                    <button type="button" class="btn btn-secondary" id="wizard-draft-btn" style="margin-right: 8px;"><i class="fa-solid fa-floppy-disk"></i> Save Draft</button>
+                                    <button type="button" class="btn btn-primary" id="wizard-next-btn">Next <i class="fa-solid fa-arrow-right"></i></button>
+                                    <button type="button" class="btn btn-accent" id="wizard-submit-btn" style="display: none;"><i class="fa-solid fa-paper-plane"></i> Submit Report</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+                
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL 1: REPORT VIEW & PRINT DETAIL -->
+    <div class="modal-overlay" id="report-detail-modal">
+        <div class="modal-container" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 id="modal-report-title">Monthly Welfare Report</h3>
+                <button class="modal-close-btn" id="close-report-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-report-body-content">
+                <!-- Dynamically loaded with styled report details -->
+            </div>
+            <div class="modal-footer" id="modal-report-footer-actions">
+                <!-- Dynamic actions: Regional Secretatry approval buttons, Print, close -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: BENEFICIARY ADD/EDIT FORM -->
+    <div class="modal-overlay" id="beneficiary-modal">
+        <div class="modal-container" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 id="beneficiary-modal-title">Register New Beneficiary</h3>
+                <button class="modal-close-btn" id="close-beneficiary-modal">&times;</button>
+            </div>
+            <form id="beneficiary-form" onsubmit="event.preventDefault();">
+                <div class="modal-body">
+                    <input type="hidden" id="ben-form-id">
+                    <div class="form-group">
+                        <label class="form-label">Full Name <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="ben-form-name" required placeholder="e.g. Fatimah Alao">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Welfare Category <span class="required">*</span></label>
+                        <select class="form-control" id="ben-form-category" required>
+                            <option value="Widow">Widow</option>
+                            <option value="Orphan">Orphan</option>
+                            <option value="Elderly">Elderly</option>
+                            <option value="Sick/Disabled">Sick/Disabled</option>
+                            <option value="Financial">Financially Challenged</option>
+                            <option value="Student">Student Support</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone Number <span class="required">*</span></label>
+                        <input type="tel" class="form-control" id="ben-form-phone" required placeholder="e.g. +2348031234567">
+                    </div>
+                    <div class="form-group" id="ben-form-district-container">
+                        <label class="form-label">District <span class="required">*</span></label>
+                        <select class="form-control" id="ben-form-district" required>
+                            <!-- Seeded dynamically based on current users context -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Residential Address <span class="required">*</span></label>
+                        <textarea class="form-control" id="ben-form-address" required rows="3" placeholder="Contact address..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancel-beneficiary-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="save-beneficiary-btn">Save Beneficiary</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: REVISION FEEDBACK MODAL -->
+    <div class="modal-overlay" id="revision-modal">
+        <div class="modal-container" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>Request Revision / Corrections</h3>
+                <button class="modal-close-btn" id="close-revision-modal">&times;</button>
+            </div>
+            <form id="revision-form" onsubmit="event.preventDefault();">
+                <input type="hidden" id="revision-report-id">
+                <div class="modal-body">
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
+                        Provide detailed feedback. The district welfare secretary will see this correction message and can edit their draft and submit again.
+                    </p>
+                    <div class="form-group">
+                        <label class="form-label">Feedback / Revision Requirements <span class="required">*</span></label>
+                        <textarea class="form-control" id="revision-feedback-text" required rows="5" placeholder="Specify which parts of the report (e.g. finance calculations, membership figures) require correction..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancel-revision-btn">Cancel</button>
+                    <button type="submit" class="btn btn-danger" id="submit-revision-btn">Send Back to District</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application Javascript Files (Centralized Architecture) -->
+    <script src="js/store.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/reports.js"></script>
+    <script src="js/beneficiaries.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

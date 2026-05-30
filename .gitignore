@@ -1,0 +1,7 @@
+.vercel
+.vscode
+.idea
+*.log
+.system_generated
+.gemini
+/scratch
