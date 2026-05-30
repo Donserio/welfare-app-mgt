@@ -1,7 +1,10 @@
 // Application Router, Theme Controller, and Role Switching Coordinator
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 0. Dynamic template interpolation of period placeholders
+    // 0. Set dropdown defaults dynamically based on current date
+    initializeDropdownDefaults();
+
+    // 0.1 Dynamic template interpolation of period placeholders
     interpolatePeriodTemplates();
 
     // 1. Initialize Theme from local storage or system preference
@@ -240,8 +243,8 @@ function interpolatePeriodTemplates() {
 
     function walk(node) {
         if (node.nodeType === 3) { // Text node
-            if (node.nodeValue.includes("{CURRENT_PERIOD}")) {
-                node.nodeValue = node.nodeValue.replace(/{CURRENT_PERIOD}/g, periodText);
+            if (node.nodeValue.includes("${currentMonthName} ${currentYear}")) {
+                node.nodeValue = node.nodeValue.replace(/\${currentMonthName} \${currentYear}/g, periodText);
             }
         } else if (node.nodeType === 1) { // Element node
             for (let child of node.childNodes) {
@@ -250,6 +253,27 @@ function interpolatePeriodTemplates() {
         }
     }
     walk(document.body);
+}
+
+function initializeDropdownDefaults() {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    const pairs = [
+        ["reg-filter-month", "reg-filter-year"],
+        ["nat-filter-month", "nat-filter-year"],
+        ["dir-filter-month", "dir-filter-year"],
+        ["supp-form-month", "supp-form-year"],
+        ["form-info-month", "form-info-year"]
+    ];
+
+    pairs.forEach(([mId, yId]) => {
+        const mEl = document.getElementById(mId);
+        const yEl = document.getElementById(yId);
+        if (mEl) mEl.value = String(currentMonth);
+        if (yEl) yEl.value = String(currentYear);
+    });
 }
 
 window.navigateTo = navigateTo;
