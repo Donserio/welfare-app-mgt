@@ -442,6 +442,88 @@ const WelfareStore = {
             regionName: "Region 2 (Ogun)",
             districtName: "Ayetoro"
         };
+    },
+
+    enforcePeriodLimits(monthSelectId, yearSelectId) {
+        const monthSelect = document.getElementById(monthSelectId);
+        const yearSelect = document.getElementById(yearSelectId);
+        if (!monthSelect || !yearSelect) return;
+
+        const updateOptions = () => {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth() + 1; // 1-indexed (1 to 12)
+
+            const selectedYearVal = yearSelect.value;
+            const selectedYear = parseInt(selectedYearVal);
+
+            // 1. Disable future years
+            Array.from(yearSelect.options).forEach(opt => {
+                if (opt.value === "all") return;
+                const optYear = parseInt(opt.value);
+                if (optYear > currentYear) {
+                    opt.disabled = true;
+                } else {
+                    opt.disabled = false;
+                }
+            });
+
+            // If selected year is disabled, select currentYear
+            let changed = false;
+            if (yearSelect.selectedOptions[0] && yearSelect.selectedOptions[0].disabled) {
+                yearSelect.value = String(currentYear);
+                changed = true;
+            }
+
+            // 2. Disable months in the month select if year is current year
+            const activeYear = parseInt(yearSelect.value);
+            Array.from(monthSelect.options).forEach(opt => {
+                if (opt.value === "all") return;
+                const optMonth = parseInt(opt.value);
+                if (!isNaN(activeYear)) {
+                    if (activeYear > currentYear) {
+                        opt.disabled = true;
+                    } else if (activeYear === currentYear) {
+                        if (optMonth > currentMonth) {
+                            opt.disabled = true;
+                        } else {
+                            opt.disabled = false;
+                        }
+                    } else {
+                        opt.disabled = false;
+                    }
+                } else {
+                    // if year is "all", we enable all months or keep them enabled
+                    opt.disabled = false;
+                }
+            });
+
+            // If selected month is disabled, select the max enabled month
+            if (monthSelect.selectedOptions[0] && monthSelect.selectedOptions[0].disabled) {
+                if (activeYear === currentYear) {
+                    monthSelect.value = String(currentMonth);
+                } else {
+                    const enabledOptions = Array.from(monthSelect.options).filter(o => !o.disabled && o.value !== "all");
+                    if (enabledOptions.length > 0) {
+                        monthSelect.value = enabledOptions[enabledOptions.length - 1].value;
+                    } else {
+                        monthSelect.value = "12";
+                    }
+                }
+                changed = true;
+            }
+
+            if (changed) {
+                // Dispatch change event to trigger listeners
+                monthSelect.dispatchEvent(new Event("change"));
+            }
+        };
+
+        // Run immediately
+        updateOptions();
+
+        // Listen for year change to update month options
+        yearSelect.addEventListener("change", updateOptions);
     }
 };
 

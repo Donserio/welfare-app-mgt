@@ -40,6 +40,11 @@ const WelfareDashboard = {
             WelfareExport.exportRegionalSummaryToCSV(ctx.regionId, month, year);
         });
 
+        // Enforce chronological boundaries on filters
+        WelfareStore.enforcePeriodLimits("reg-filter-month", "reg-filter-year");
+        WelfareStore.enforcePeriodLimits("nat-filter-month", "nat-filter-year");
+        WelfareStore.enforcePeriodLimits("dir-filter-month", "dir-filter-year");
+
         window.WelfareDashboard = this;
     },
 
@@ -81,8 +86,13 @@ const WelfareDashboard = {
         const beneficiaries = WelfareStore.getBeneficiaries().filter(b => b.districtId === ctx.districtId);
         const reports = WelfareStore.getReports().filter(r => r.districtId === ctx.districtId);
         
-        // Members stats
-        const activeReport = WelfareStore.getReportByParams(ctx.districtId, 5, 2026); // May 2026
+        // Members stats - dynamically check the current month/year
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+        const currentMonthName = this.getMonthName(currentMonth);
+
+        const activeReport = WelfareStore.getReportByParams(ctx.districtId, currentMonth, currentYear);
         
         let membersCount = 0;
         let agedCount = 0;
@@ -116,15 +126,25 @@ const WelfareDashboard = {
 
         alertBanner.style.display = "none";
 
+        // Update dashboard status and card titles dynamically
+        const statusTitleEl = document.getElementById("dist-report-status-title");
+        if (statusTitleEl) {
+            statusTitleEl.textContent = `Report Status (${currentMonthName} ${currentYear})`;
+        }
+        const cardTitleEl = document.getElementById("dist-report-card-title");
+        if (cardTitleEl) {
+            cardTitleEl.textContent = `Submit ${currentMonthName} ${currentYear} Report`;
+        }
+
         if (activeReport) {
-            statusDate.textContent = `Status of May 2026 Report`;
+            statusDate.textContent = `Status of ${currentMonthName} ${currentYear} Report`;
             
             if (activeReport.status === "approved") {
                 statusEl.textContent = "Approved";
                 statusEl.style.color = "var(--success)";
                 statusBox.style.color = "var(--success)";
                 statusBox.style.backgroundColor = "var(--success-light)";
-                entryBtn.innerHTML = '<i class="fa-solid fa-eye"></i> View May Report';
+                entryBtn.innerHTML = `<i class="fa-solid fa-eye"></i> View ${currentMonthName} Report`;
             } else if (activeReport.status === "pending") {
                 statusEl.textContent = "Pending Review";
                 statusEl.style.color = "var(--warning)";
@@ -155,7 +175,7 @@ const WelfareDashboard = {
             statusEl.style.color = "var(--text-light)";
             statusBox.style.color = "var(--text-light)";
             statusBox.style.backgroundColor = "var(--bg-alt)";
-            statusDate.textContent = "No data entered for May 2026";
+            statusDate.textContent = `No data entered for ${currentMonthName} ${currentYear}`;
             entryBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Begin Data Entry';
         }
 

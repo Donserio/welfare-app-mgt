@@ -62,6 +62,10 @@ const WelfareReports = {
             this.submitSupplementaryReport();
         });
 
+        // Enforce chronological boundaries on form selectors
+        WelfareStore.enforcePeriodLimits("form-info-month", "form-info-year");
+        WelfareStore.enforcePeriodLimits("supp-form-month", "supp-form-year");
+
         window.WelfareReports = this;
     },
 
@@ -71,7 +75,13 @@ const WelfareReports = {
         if (ctx.role === "district") {
             const btn = document.getElementById("dist-start-report-btn");
             if (btn) btn.style.display = "inline-flex";
-            document.getElementById("dist-report-card-title").textContent = `Submit ${this.getMonthName(5)} 2026 Report`;
+            const now = new Date();
+            const currentMonth = now.getMonth() + 1;
+            const currentYear = now.getFullYear();
+            const cardTitleEl = document.getElementById("dist-report-card-title");
+            if (cardTitleEl) {
+                cardTitleEl.textContent = `Submit ${this.getMonthName(currentMonth)} ${currentYear} Report`;
+            }
         }
     },
 
@@ -107,8 +117,11 @@ const WelfareReports = {
         document.getElementById("form-info-email").value = ctx.email;
 
         // Default to current selection
-        document.getElementById("form-info-month").value = "5";
-        document.getElementById("form-info-year").value = "2026";
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+        document.getElementById("form-info-month").value = String(currentMonth);
+        document.getElementById("form-info-year").value = String(currentYear);
 
         // Load if exists
         this.loadActiveReportOrDraft();
@@ -235,7 +248,7 @@ const WelfareReports = {
                 </div>
                 <div class="form-group">
                     <label class="form-label">Date Provided <span class="required">*</span></label>
-                    <input type="date" class="form-control" name="assist-date" required value="${data.date || ''}">
+                    <input type="date" class="form-control" name="assist-date" required value="${data.date || ''}" max="${new Date().toISOString().split('T')[0]}">
                 </div>
             </div>
             <div class="form-group">
@@ -272,7 +285,7 @@ const WelfareReports = {
                 </div>
                 <div class="form-group">
                     <label class="form-label">Event Date <span class="required">*</span></label>
-                    <input type="date" class="form-control" name="outing-date" required value="${data.date || ''}">
+                    <input type="date" class="form-control" name="outing-date" required value="${data.date || ''}" max="${new Date().toISOString().split('T')[0]}">
                 </div>
             </div>
             <div class="form-row-3" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
@@ -647,8 +660,13 @@ const WelfareReports = {
         document.getElementById("supp-form-title").value = "";
         document.getElementById("supp-form-region").value = ctx.regionName || "National Secretariat";
         document.getElementById("supp-form-by").value = ctx.userName;
-        document.getElementById("supp-form-month").value = "5";
-        document.getElementById("supp-form-year").value = "2026";
+        
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+        document.getElementById("supp-form-month").value = String(currentMonth);
+        document.getElementById("supp-form-year").value = String(currentYear);
+        
         document.getElementById("supp-form-fields-repeater-container").innerHTML = "";
 
         this.addSupplementaryField("", "text", "");
