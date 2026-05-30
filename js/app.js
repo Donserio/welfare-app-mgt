@@ -1,6 +1,9 @@
 // Application Router, Theme Controller, and Role Switching Coordinator
 
 document.addEventListener("DOMContentLoaded", () => {
+    // 0. Dynamic template interpolation of period placeholders
+    interpolatePeriodTemplates();
+
     // 1. Initialize Theme from local storage or system preference
     initTheme();
 
@@ -226,6 +229,27 @@ function initMobileNav() {
             }
         }
     });
+}
+
+function interpolatePeriodTemplates() {
+    const now = new Date();
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const currentMonthName = months[now.getMonth()];
+    const currentYear = now.getFullYear();
+    const periodText = `${currentMonthName} ${currentYear}`;
+
+    function walk(node) {
+        if (node.nodeType === 3) { // Text node
+            if (node.nodeValue.includes("{CURRENT_PERIOD}")) {
+                node.nodeValue = node.nodeValue.replace(/{CURRENT_PERIOD}/g, periodText);
+            }
+        } else if (node.nodeType === 1) { // Element node
+            for (let child of node.childNodes) {
+                walk(child);
+            }
+        }
+    }
+    walk(document.body);
 }
 
 window.navigateTo = navigateTo;
