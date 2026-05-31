@@ -65,19 +65,131 @@ function updateThemeIcon(theme) {
 
 // Role Switcher & Sidebar Navigation Builder
 function initRoleSwitcher() {
-    const selector = document.getElementById("role-selector-dropdown");
-    const activeRole = WelfareStore.getActiveRole();
-    selector.value = activeRole;
+    const regionSelect = document.getElementById("role-simulator-region-select");
+    const districtSelect = document.getElementById("role-simulator-district-select");
+    if (!regionSelect || !districtSelect) return;
 
-    // Trigger initial render for active role
+    const activeRole = WelfareStore.getActiveRole();
+
+    // 1. Build and synchronize selectors on load
+    buildSimulationSelectors(activeRole);
+
+    // 2. Trigger initial render
     switchRoleContext(activeRole);
 
-    selector.addEventListener("change", (e) => {
-        const newRole = e.target.value;
-        WelfareStore.setActiveRole(newRole);
-        switchRoleContext(newRole);
+    // 3. Register Event Listeners
+    regionSelect.addEventListener("change", (e) => {
+        const val = e.target.value;
+        if (val === "national") {
+            WelfareStore.setActiveRole("national");
+            updateDistrictSelect("national");
+            switchRoleContext("national");
+        } else {
+            // Default to region level when region changes
+            updateDistrictSelect(val, "region-level");
+            WelfareStore.setActiveRole(val);
+            switchRoleContext(val);
+        }
+    });
+
+    districtSelect.addEventListener("change", (e) => {
+        const val = e.target.value;
+        if (val === "region-level") {
+            const regId = regionSelect.value;
+            WelfareStore.setActiveRole(regId);
+            switchRoleContext(regId);
+        } else {
+            WelfareStore.setActiveRole(val);
+            switchRoleContext(val);
+        }
     });
 }
+
+function buildSimulationSelectors(activeRole) {
+    const regionSelect = document.getElementById("role-simulator-region-select");
+    const districtSelect = document.getElementById("role-simulator-district-select");
+    if (!regionSelect || !districtSelect) return;
+
+    // 1. Populate Region dropdown
+    regionSelect.innerHTML = "";
+    
+    // Add National option
+    const natOpt = document.createElement("option");
+    natOpt.value = "national";
+    natOpt.textContent = "National Administrator";
+    regionSelect.appendChild(natOpt);
+
+    // Add all regions from database
+    const regions = WelfareStore.getRegions();
+    regions.forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r.id;
+        opt.textContent = r.name;
+        regionSelect.appendChild(opt);
+    });
+
+    // 2. Determine current active state
+    let activeRegion = "national";
+    let activeDistrictVal = "region-level";
+
+    if (activeRole && activeRole !== "national") {
+        if (activeRole.startsWith("region-")) {
+            activeRegion = activeRole;
+            activeDistrictVal = "region-level";
+        } else if (activeRole.startsWith("district-")) {
+            // Find region of this district
+            const distId = activeRole.replace("district-", "dist-");
+            const district = WelfareStore.getDistricts().find(d => d.id === distId);
+            if (district) {
+                activeRegion = district.regionId;
+                activeDistrictVal = activeRole;
+            }
+        }
+    }
+
+    // Set value on region dropdown
+    regionSelect.value = activeRegion;
+
+    // 3. Populate district dropdown based on active region
+    updateDistrictSelect(activeRegion, activeDistrictVal);
+}
+
+function updateDistrictSelect(regionId, selectedDistrictVal) {
+    const districtSelect = document.getElementById("role-simulator-district-select");
+    if (!districtSelect) return;
+
+    if (regionId === "national") {
+        districtSelect.style.display = "none";
+        districtSelect.innerHTML = "";
+        return;
+    }
+
+    districtSelect.innerHTML = "";
+    
+    // Default option: view region level
+    const regionLevelOpt = document.createElement("option");
+    regionLevelOpt.value = "region-level";
+    regionLevelOpt.textContent = "Region Level (View)";
+    districtSelect.appendChild(regionLevelOpt);
+
+    // Populate all districts for this region
+    const districts = WelfareStore.getDistrictsByRegion(regionId);
+    districts.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = `district-${d.id.replace("dist-", "")}`;
+        opt.textContent = `District: ${d.name}`;
+        districtSelect.appendChild(opt);
+    });
+
+    // Show it
+    districtSelect.style.display = "inline-block";
+    
+    // Set selected value
+    if (selectedDistrictVal) {
+        districtSelect.value = selectedDistrictVal;
+    }
+}
+
 
 function switchRoleContext(roleString) {
     // 1. Fetch details about active role
@@ -447,10 +559,9 @@ function checkLoginState() {
             if (realUserRole === "national") {
                 if (roleSwitcher) {
                     roleSwitcher.style.display = "flex";
-                    // Synchronize selector dropdown value
+                    // Synchronize selector dropdown values dynamically
                     const activeRole = WelfareStore.getActiveRole();
-                    const selector = document.getElementById("role-selector-dropdown");
-                    if (selector) selector.value = activeRole;
+                    buildSimulationSelectors(activeRole);
                 }
             } else {
                 if (roleSwitcher) roleSwitcher.style.display = "none";

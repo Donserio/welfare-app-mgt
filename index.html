@@ -53,21 +53,12 @@
                 <div class="header-actions">
                     <!-- Interactive Role Selector Widget -->
                     <div class="role-switcher-container">
-                        <span class="role-switcher-label">Simulate Role:</span>
-                        <select class="role-select" id="role-selector-dropdown">
-                            <optgroup label="District Secretaries (Ogun)">
-                                <option value="district-2-1">District: Ayetoro</option>
-                                <option value="district-2-2">District: Ogun Waterside</option>
-                                <option value="district-2-3">District: Abeokuta</option>
-                            </optgroup>
-                            <optgroup label="Regional Secretaries">
-                                <option value="region-2">Region 2 (Ogun)</option>
-                                <option value="region-1">Region 1 (Lagos)</option>
-                                <option value="region-3">Region 3 (Oyo)</option>
-                            </optgroup>
-                            <optgroup label="National Secretariat">
-                                <option value="national">National Welfare Administrator</option>
-                            </optgroup>
+                        <span class="role-switcher-label">Simulate:</span>
+                        <select class="role-select" id="role-simulator-region-select">
+                            <!-- Populated dynamically -->
+                        </select>
+                        <select class="role-select" id="role-simulator-district-select" style="margin-left: 8px; display: none;">
+                            <!-- Populated dynamically -->
                         </select>
                     </div>
 
