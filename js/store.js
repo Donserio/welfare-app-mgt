@@ -625,25 +625,70 @@ const WelfareStore = {
             if (cachedProfile) {
                 try {
                     const prof = JSON.parse(cachedProfile);
-                    const region = this.getRegions().find(r => r.id === prof.region_id);
-                    const district = this.getDistricts().find(d => d.id === prof.district_id);
-                    
-                    return {
-                        role: prof.role,
-                        roleTitle: prof.role === "national" ? "National Welfare Administrator" : 
-                                   (prof.role === "region" ? "Regional Welfare Secretary" : "District Welfare Secretary"),
-                        userName: prof.user_name_display || "Welfare Secretary",
-                        email: prof.username,
-                        regionId: prof.region_id || null,
-                        districtId: prof.district_id || null,
-                        regionName: region ? region.name : (prof.role === "national" ? "All Regions" : "Unknown Region"),
-                        districtName: district ? district.name : (prof.role === "district" ? "Unknown District" : "All Districts")
-                    };
+                    if (prof.role !== "national") {
+                        const region = this.getRegions().find(r => r.id === prof.region_id);
+                        const district = this.getDistricts().find(d => d.id === prof.district_id);
+                        return {
+                            role: prof.role,
+                            roleTitle: prof.role === "region" ? "Regional Welfare Secretary" : "District Welfare Secretary",
+                            userName: prof.user_name_display || "Welfare Secretary",
+                            email: prof.username,
+                            regionId: prof.region_id || null,
+                            districtId: prof.district_id || null,
+                            regionName: region ? region.name : "Unknown Region",
+                            districtName: district ? district.name : (prof.role === "district" ? "Unknown District" : "All Districts")
+                        };
+                    } else {
+                        // National admin can simulate any other role
+                        const simulatedRole = this.getActiveRole();
+                        if (simulatedRole && simulatedRole !== "national") {
+                            if (simulatedRole.startsWith("region-")) {
+                                const region = this.getRegions().find(r => r.id === simulatedRole);
+                                return {
+                                    role: "region",
+                                    roleTitle: "Regional Welfare Secretary (Simulated)",
+                                    userName: `Simulated Regional Secretary (${region ? region.name : simulatedRole})`,
+                                    email: prof.username,
+                                    regionId: simulatedRole,
+                                    districtId: null,
+                                    regionName: region ? region.name : "Unknown Region",
+                                    districtName: "All Districts"
+                                };
+                            } else if (simulatedRole.startsWith("district-")) {
+                                const distId = simulatedRole.replace("district-", "dist-");
+                                const district = this.getDistricts().find(d => d.id === distId);
+                                const region = district ? this.getRegions().find(r => r.id === district.regionId) : null;
+                                return {
+                                    role: "district",
+                                    roleTitle: "District Welfare Secretary (Simulated)",
+                                    userName: `Simulated District Secretary (${district ? district.name : distId})`,
+                                    email: prof.username,
+                                    regionId: district ? district.regionId : null,
+                                    districtId: distId,
+                                    regionName: region ? region.name : "Unknown Region",
+                                    districtName: district ? district.name : "Unknown District"
+                                };
+                            }
+                        }
+                        
+                        // Default to full National context
+                        return {
+                            role: "national",
+                            roleTitle: "National Welfare Administrator",
+                            userName: prof.user_name_display || "National Welfare Administrator",
+                            email: prof.username,
+                            regionId: null,
+                            districtId: null,
+                            regionName: "All Regions",
+                            districtName: "All Districts"
+                        };
+                    }
                 } catch (e) {
                     console.error("Error reading cached profile:", e);
                 }
             }
         }
+
 
         const role = this.getActiveRole();
         

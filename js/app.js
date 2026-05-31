@@ -427,9 +427,6 @@ function checkLoginState() {
     const roleSwitcher = document.querySelector(".role-switcher-container");
 
     if (WelfareStore.isSupabaseEnabled) {
-        // Hide mock role switcher in live mode
-        if (roleSwitcher) roleSwitcher.style.display = "none";
-        
         const hasSession = localStorage.getItem("lajna_active_session_profile");
         if (hasSession) {
             appContainer.style.display = "flex";
@@ -437,8 +434,31 @@ function checkLoginState() {
             
             // Build current role context
             const ctx = WelfareStore.getCurrentContext();
+            
+            // Determine if the logged-in user is a national administrator
+            let realUserRole = "district";
+            try {
+                const prof = JSON.parse(hasSession);
+                realUserRole = prof.role;
+            } catch (e) {
+                console.error("Error parsing user profile session:", e);
+            }
+
+            if (realUserRole === "national") {
+                if (roleSwitcher) {
+                    roleSwitcher.style.display = "flex";
+                    // Synchronize selector dropdown value
+                    const activeRole = WelfareStore.getActiveRole();
+                    const selector = document.getElementById("role-selector-dropdown");
+                    if (selector) selector.value = activeRole;
+                }
+            } else {
+                if (roleSwitcher) roleSwitcher.style.display = "none";
+            }
+            
             switchRoleContext(ctx.role);
         } else {
+            if (roleSwitcher) roleSwitcher.style.display = "none";
             appContainer.style.display = "none";
             loginContainer.style.display = "flex";
         }
@@ -449,6 +469,7 @@ function checkLoginState() {
         loginContainer.style.display = "none";
     }
 }
+
 
 function initLoginUI() {
     const loginForm = document.getElementById("login-form");
