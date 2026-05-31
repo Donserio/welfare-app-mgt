@@ -1,4 +1,5 @@
 .vercel
+.env
 .vscode
 .idea
 *.log
