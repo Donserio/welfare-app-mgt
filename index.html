@@ -75,6 +75,11 @@
                     <button class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle dark/light theme">
                         <i class="fa-solid fa-moon" id="theme-icon"></i>
                     </button>
+
+                    <!-- Supabase Connection Config Trigger -->
+                    <button class="theme-toggle-btn" id="db-config-toggle" title="Supabase Database Settings" style="margin-left: 8px;">
+                        <i class="fa-solid fa-database" id="db-status-icon" style="color: var(--text-muted);"></i>
+                    </button>
                 </div>
             </header>
 
@@ -1118,7 +1123,52 @@
         </div>
     </div>
 
+    <!-- MODAL 4: SUPABASE SETTINGS MODAL -->
+    <div class="modal-overlay" id="supabase-modal">
+        <div class="modal-container" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-database"></i> Supabase Integration</h3>
+                <button class="modal-close-btn" id="close-supabase-modal">&times;</button>
+            </div>
+            <form id="supabase-config-form" onsubmit="event.preventDefault();">
+                <div class="modal-body">
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
+                        Connect the client application directly to your Supabase PostgreSQL instance. If not configured, the app will continue to run in <strong>Offline LocalStorage Mock Mode</strong>.
+                    </p>
+                    
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label class="form-label">Supabase URL <span class="required">*</span></label>
+                        <input type="url" class="form-control" id="supabase-url-input" required placeholder="https://your-project-id.supabase.co" style="font-family: monospace; font-size: 0.85rem;">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label class="form-label">Supabase Anon API Key <span class="required">*</span></label>
+                        <input type="password" class="form-control" id="supabase-key-input" required placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." style="font-family: monospace; font-size: 0.85rem;">
+                    </div>
+
+                    <div id="supabase-connection-status" style="padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.82rem; margin-bottom: 12px; display: none;">
+                        <!-- Status text dynamically populated -->
+                    </div>
+
+                    <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; background: var(--bg-alt); padding: 10px; border-radius: var(--radius-sm); border: 1px dashed var(--border);">
+                        <strong>💡 Setup Instructions:</strong>
+                        <ol style="margin-left: 16px; margin-top: 4px;">
+                            <li>Create a project on <a href="https://supabase.com" target="_blank" style="color: var(--primary-light); text-decoration: underline;">supabase.com</a></li>
+                            <li>Run the SQL statements from your root <code>schema.sql</code> in the SQL Editor.</li>
+                            <li>Navigate to Project Settings &gt; API to copy your project URL and Anon API key here.</li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="supabase-disconnect-btn" style="display: none; padding: 6px 12px; font-size: 0.82rem;">Disconnect (Reset to Mock)</button>
+                    <button type="submit" class="btn btn-primary" id="supabase-connect-btn" style="padding: 6px 12px; font-size: 0.82rem;">Connect & Initialize</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Application Javascript Files (Centralized Architecture) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/store.js"></script>
     <script src="js/export.js"></script>
     <script src="js/dashboard.js"></script>

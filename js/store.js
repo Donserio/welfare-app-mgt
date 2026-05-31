@@ -275,6 +275,9 @@ const DEFAULT_NOTIFICATIONS = [
 ];
 
 const WelfareStore = {
+    supabaseClient: null,
+    isSupabaseEnabled: false,
+
     init() {
         if (!localStorage.getItem("lajna_regions")) {
             localStorage.setItem("lajna_regions", JSON.stringify(DEFAULT_REGIONS));
@@ -298,6 +301,22 @@ const WelfareStore = {
         // Initial Active User Profile
         if (!localStorage.getItem("lajna_active_role")) {
             localStorage.setItem("lajna_active_role", "district-2-1"); // Default: Ayetoro District Secretary
+        }
+
+        // Initialize Supabase Client if credentials exist
+        const dbUrl = localStorage.getItem("lajna_supabase_url");
+        const dbKey = localStorage.getItem("lajna_supabase_key");
+        if (dbUrl && dbKey) {
+            try {
+                if (typeof supabase !== 'undefined') {
+                    this.supabaseClient = supabase.createClient(dbUrl, dbKey);
+                    this.isSupabaseEnabled = true;
+                    console.log("Supabase connected on init!");
+                    this.pullAllFromBackend();
+                }
+            } catch (err) {
+                console.error("Failed to connect to Supabase on init:", err);
+            }
         }
     },
 
@@ -352,12 +371,19 @@ const WelfareStore = {
             beneficiaries.push(beneficiary);
         }
         localStorage.setItem("lajna_beneficiaries", JSON.stringify(beneficiaries));
+        
+        // Sync beneficiary to backend
+        this.syncBeneficiaryToBackend(beneficiary);
+
         return beneficiary;
     },
 
     deleteBeneficiary(id) {
         const beneficiaries = this.getBeneficiaries().filter(b => b.id !== id);
         localStorage.setItem("lajna_beneficiaries", JSON.stringify(beneficiaries));
+
+        // Sync delete beneficiary
+        this.syncDeleteBeneficiaryToBackend(id);
     },
 
     getReports() {
@@ -395,6 +421,9 @@ const WelfareStore = {
         }
         localStorage.setItem("lajna_reports", JSON.stringify(reports));
 
+        // Background sync report
+        this.syncReportToBackend(report);
+
         // If it was submitted (i.e. status is "pending"), add notification for Region
         if (report.status === "pending") {
             const district = this.getDistricts().find(d => d.id === report.districtId);
@@ -420,6 +449,9 @@ const WelfareStore = {
                 reports[index].revisionComments = comments;
             }
             localStorage.setItem("lajna_reports", JSON.stringify(reports));
+
+            // Sync status update to backend
+            this.syncReportToBackend(reports[index]);
 
             // Push notifications for approvals/revisions
             const rep = reports[index];
@@ -523,6 +555,10 @@ const WelfareStore = {
         }
         reports = reports.filter(r => r.id !== reportId);
         localStorage.setItem("lajna_reports", JSON.stringify(reports));
+
+        // Sync single report deletion
+        this.syncDeleteReportToBackend(reportId);
+
         return true;
     },
 
@@ -530,12 +566,14 @@ const WelfareStore = {
         let reports = this.getReports();
         let deletedCount = 0;
         let nonDraftCount = 0;
+        const deletedIds = [];
         
         reportIds.forEach(id => {
             const rep = reports.find(r => r.id === id);
             if (rep) {
                 if (rep.status === "draft") {
                     deletedCount++;
+                    deletedIds.push(id);
                 } else {
                     nonDraftCount++;
                 }
@@ -549,6 +587,10 @@ const WelfareStore = {
         if (deletedCount > 0) {
             reports = reports.filter(r => !(reportIds.includes(r.id) && r.status === "draft"));
             localStorage.setItem("lajna_reports", JSON.stringify(reports));
+
+            // Sync bulk deletion
+            this.syncBulkDeleteReportsToBackend(deletedIds);
+
             return true;
         }
         return false;
@@ -568,6 +610,10 @@ const WelfareStore = {
         };
         notifs.unshift(newNotif); // Add to beginning (latest first)
         localStorage.setItem("lajna_notifications", JSON.stringify(notifs));
+
+        // Sync new notification to backend
+        this.syncNotificationToBackend(newNotif);
+
         return newNotif;
     },
 
@@ -579,12 +625,18 @@ const WelfareStore = {
             }
         });
         localStorage.setItem("lajna_notifications", JSON.stringify(notifs));
+
+        // Sync notifications read status
+        this.syncMarkNotificationsReadToBackend(role, recipientId);
     },
 
     clearNotifications(role, recipientId) {
         let notifs = this.getNotifications();
         notifs = notifs.filter(n => !(n.recipientRole === role && n.recipientId === recipientId));
         localStorage.setItem("lajna_notifications", JSON.stringify(notifs));
+
+        // Sync cleared notifications to backend
+        this.syncClearNotificationsToBackend(role, recipientId);
     },
 
     enforcePeriodLimits(monthSelectId, yearSelectId) {
@@ -667,6 +719,255 @@ const WelfareStore = {
 
         // Listen for year change to update month options
         yearSelect.addEventListener("change", updateOptions);
+    },
+
+    // =============================================================
+    // SUPABASE BACKEND SYNCHRONIZATION METHODS (Local-First Sync)
+    // =============================================================
+    async syncReportToBackend(report) {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) return;
+        try {
+            const { error } = await this.supabaseClient
+                .from('reports')
+                .upsert({
+                    id: report.id,
+                    region_id: report.regionId,
+                    district_id: report.districtId,
+                    month: report.month,
+                    year: report.year,
+                    status: report.status,
+                    submitted_by: report.submittedBy || '',
+                    president_name: report.presidentName || '',
+                    email: report.email || '',
+                    submitted_date: report.submittedDate || null,
+                    revision_comments: report.revisionComments || '',
+                    data: report.data,
+                    updated_at: new Date().toISOString()
+                });
+            if (error) console.error("Sync report error:", error);
+        } catch (err) {
+            console.error("Sync report exception:", err);
+        }
+    },
+
+    async syncDeleteReportToBackend(reportId) {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) return;
+        try {
+            const { error } = await this.supabaseClient
+                .from('reports')
+                .delete()
+                .eq('id', reportId);
+            if (error) console.error("Delete report error:", error);
+        } catch (err) {
+            console.error("Delete report exception:", err);
+        }
+    },
+
+    async syncBulkDeleteReportsToBackend(reportIds) {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) return;
+        try {
+            const { error } = await this.supabaseClient
+                .from('reports')
+                .delete()
+                .in('id', reportIds);
+            if (error) console.error("Bulk delete reports error:", error);
+        } catch (err) {
+            console.error("Bulk delete reports exception:", err);
+        }
+    },
+
+    async syncBeneficiaryToBackend(b) {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) return;
+        try {
+            const { error } = await this.supabaseClient
+                .from('beneficiaries')
+                .upsert({
+                    id: b.id,
+                    district_id: b.districtId,
+                    name: b.name,
+                    age: b.age ? parseInt(b.age) : null,
+                    category: b.category,
+                    contact: b.contact || '',
+                    family_size: b.familySize ? parseInt(b.familySize) : 1,
+                    address: b.address || '',
+                    monthly_assistance_needed: b.monthlyAssistanceNeeded ? parseFloat(b.monthlyAssistanceNeeded) : 0,
+                    status: (b.status || 'active').toLowerCase()
+                });
+            if (error) console.error("Sync beneficiary error:", error);
+        } catch (err) {
+            console.error("Sync beneficiary exception:", err);
+        }
+    },
+
+    async syncDeleteBeneficiaryToBackend(id) {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) return;
+        try {
+            const { error } = await this.supabaseClient
+                .from('beneficiaries')
+                .delete()
+                .eq('id', id);
+            if (error) console.error("Delete beneficiary error:", error);
+        } catch (err) {
+            console.error("Delete beneficiary exception:", err);
+        }
+    },
+
+    async syncNotificationToBackend(n) {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) return;
+        try {
+            const { error } = await this.supabaseClient
+                .from('notifications')
+                .upsert({
+                    id: n.id,
+                    recipient_role: n.recipientRole,
+                    recipient_id: n.recipientId,
+                    message: n.message,
+                    type: n.type,
+                    read: n.read || false,
+                    timestamp: n.timestamp || new Date().toISOString()
+                });
+            if (error) console.error("Sync notification error:", error);
+        } catch (err) {
+            console.error("Sync notification exception:", err);
+        }
+    },
+
+    async syncClearNotificationsToBackend(role, recipientId) {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) return;
+        try {
+            const { error } = await this.supabaseClient
+                .from('notifications')
+                .delete()
+                .eq('recipient_role', role)
+                .eq('recipient_id', recipientId);
+            if (error) console.error("Clear notifications error:", error);
+        } catch (err) {
+            console.error("Clear notifications exception:", err);
+        }
+    },
+
+    async syncMarkNotificationsReadToBackend(role, recipientId) {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) return;
+        try {
+            const { error } = await this.supabaseClient
+                .from('notifications')
+                .update({ read: true })
+                .eq('recipient_role', role)
+                .eq('recipient_id', recipientId);
+            if (error) console.error("Mark notifications read error:", error);
+        } catch (err) {
+            console.error("Mark notifications read exception:", err);
+        }
+    },
+
+    async pullReportsFromBackend() {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) return;
+        try {
+            const { data, error } = await this.supabaseClient
+                .from('reports')
+                .select('*');
+            if (error) {
+                console.error("Pull reports error:", error);
+                return;
+            }
+            if (data) {
+                const localReports = data.map(r => ({
+                    id: r.id,
+                    regionId: r.region_id,
+                    districtId: r.district_id,
+                    month: r.month,
+                    year: r.year,
+                    status: r.status,
+                    submittedBy: r.submitted_by,
+                    presidentName: r.president_name,
+                    email: r.email,
+                    submittedDate: r.submitted_date,
+                    revisionComments: r.revision_comments,
+                    data: r.data
+                }));
+                localStorage.setItem("lajna_reports", JSON.stringify(localReports));
+            }
+        } catch (err) {
+            console.error("Pull reports exception:", err);
+        }
+    },
+
+    async pullBeneficiariesFromBackend() {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) return;
+        try {
+            const { data, error } = await this.supabaseClient
+                .from('beneficiaries')
+                .select('*');
+            if (error) {
+                console.error("Pull beneficiaries error:", error);
+                return;
+            }
+            if (data) {
+                const localBeneficiaries = data.map(b => ({
+                    id: b.id,
+                    districtId: b.district_id,
+                    name: b.name,
+                    age: b.age,
+                    category: b.category,
+                    contact: b.contact,
+                    familySize: b.family_size,
+                    address: b.address,
+                    monthlyAssistanceNeeded: parseFloat(b.monthly_assistance_needed) || 0,
+                    status: b.status.charAt(0).toUpperCase() + b.status.slice(1) // match 'Active' camel case
+                }));
+                localStorage.setItem("lajna_beneficiaries", JSON.stringify(localBeneficiaries));
+            }
+        } catch (err) {
+            console.error("Pull beneficiaries exception:", err);
+        }
+    },
+
+    async pullNotificationsFromBackend() {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) return;
+        try {
+            const { data, error } = await this.supabaseClient
+                .from('notifications')
+                .select('*');
+            if (error) {
+                console.error("Pull notifications error:", error);
+                return;
+            }
+            if (data) {
+                const localNotifications = data.map(n => ({
+                    id: n.id,
+                    recipientRole: n.recipient_role,
+                    recipientId: n.recipient_id,
+                    message: n.message,
+                    type: n.type,
+                    read: n.read,
+                    timestamp: n.timestamp
+                }));
+                localStorage.setItem("lajna_notifications", JSON.stringify(localNotifications));
+            }
+        } catch (err) {
+            console.error("Pull notifications exception:", err);
+        }
+    },
+
+    async pullAllFromBackend() {
+        if (!this.isSupabaseEnabled) return;
+        console.log("Syncing database with Supabase backend...");
+        await Promise.all([
+            this.pullReportsFromBackend(),
+            this.pullBeneficiariesFromBackend(),
+            this.pullNotificationsFromBackend()
+        ]);
+        console.log("Sync complete!");
+        if (window.WelfareDashboard) {
+            window.WelfareDashboard.refresh();
+        }
+        if (window.WelfareReports) {
+            window.WelfareReports.refresh();
+        }
+        if (window.WelfareBeneficiaries) {
+            window.WelfareBeneficiaries.refresh();
+        }
+    }
     }
 };
 

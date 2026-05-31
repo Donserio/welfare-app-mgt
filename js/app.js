@@ -18,6 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 4. Setup mobile drawer navigation
     initMobileNav();
+
+    // 5. Setup Supabase UI panel listeners
+    initSupabaseUI();
 });
 
 // Theme Logic
@@ -282,3 +285,114 @@ function initializeDropdownDefaults() {
 }
 
 window.navigateTo = navigateTo;
+
+function initSupabaseUI() {
+    const dbToggle = document.getElementById("db-config-toggle");
+    const dbModal = document.getElementById("supabase-modal");
+    const closeBtn = document.getElementById("close-supabase-modal");
+    const configForm = document.getElementById("supabase-config-form");
+    const disconnectBtn = document.getElementById("supabase-disconnect-btn");
+    const urlInput = document.getElementById("supabase-url-input");
+    const keyInput = document.getElementById("supabase-key-input");
+    const statusDiv = document.getElementById("supabase-connection-status");
+    const dbIcon = document.getElementById("db-status-icon");
+
+    if (!dbToggle || !dbModal) return;
+
+    // Toggle Modal
+    dbToggle.addEventListener("click", () => {
+        urlInput.value = localStorage.getItem("lajna_supabase_url") || "";
+        keyInput.value = localStorage.getItem("lajna_supabase_key") || "";
+        statusDiv.style.display = "none";
+        
+        if (WelfareStore.isSupabaseEnabled) {
+            disconnectBtn.style.display = "inline-block";
+        } else {
+            disconnectBtn.style.display = "none";
+        }
+        dbModal.classList.add("active");
+    });
+
+    // Close Modal on Esc or overlay click (rely on app.js global events for .modal-overlay)
+    closeBtn.addEventListener("click", () => {
+        dbModal.classList.remove("active");
+    });
+
+    // Handle Connect
+    configForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const url = urlInput.value.trim();
+        const key = keyInput.value.trim();
+
+        statusDiv.style.display = "block";
+        statusDiv.style.background = "var(--bg-alt)";
+        statusDiv.style.color = "var(--text)";
+        statusDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Connecting to Supabase...`;
+
+        try {
+            if (typeof supabase === 'undefined') {
+                throw new Error("Supabase library not loaded. Ensure you are connected to the internet.");
+            }
+            const client = supabase.createClient(url, key);
+            
+            // Query regions table to test auth & table structures
+            const { data, error } = await client.from("regions").select("id").limit(1);
+            if (error) {
+                throw new Error(error.message);
+            }
+
+            // Connection success
+            localStorage.setItem("lajna_supabase_url", url);
+            localStorage.setItem("lajna_supabase_key", key);
+            WelfareStore.supabaseClient = client;
+            WelfareStore.isSupabaseEnabled = true;
+
+            statusDiv.style.background = "rgba(5, 150, 105, 0.1)";
+            statusDiv.style.color = "var(--success)";
+            statusDiv.innerHTML = `<i class="fa-solid fa-circle-check"></i> Connected! Synchronizing datastore...`;
+
+            // Update UI status icon
+            dbIcon.style.color = "var(--success)";
+            dbIcon.title = "Connected to Supabase PostgreSQL Database";
+
+            // Sync down reports & data
+            await WelfareStore.pullAllFromBackend();
+
+            setTimeout(() => {
+                dbModal.classList.remove("active");
+            }, 1200);
+
+        } catch (err) {
+            statusDiv.style.background = "rgba(220, 38, 38, 0.1)";
+            statusDiv.style.color = "var(--danger)";
+            statusDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Connection failed: ${err.message}. Ensure your schema is built.`;
+        }
+    });
+
+    // Handle Disconnect
+    disconnectBtn.addEventListener("click", () => {
+        localStorage.removeItem("lajna_supabase_url");
+        localStorage.removeItem("lajna_supabase_key");
+        
+        WelfareStore.supabaseClient = null;
+        WelfareStore.isSupabaseEnabled = false;
+
+        dbIcon.style.color = "var(--text-muted)";
+        dbIcon.title = "Offline LocalStorage Mock Mode (Click to configure)";
+        
+        dbModal.classList.remove("active");
+        alert("Switched back to Offline LocalStorage Mock Mode.");
+        
+        // Refresh active views to display local storage data cache
+        if (window.WelfareDashboard) window.WelfareDashboard.refresh();
+    });
+
+    // Initial Status Check
+    if (WelfareStore.isSupabaseEnabled) {
+        dbIcon.style.color = "var(--success)";
+        dbIcon.title = "Connected to Supabase PostgreSQL Database";
+    } else {
+        dbIcon.style.color = "var(--text-muted)";
+        dbIcon.title = "Offline LocalStorage Mock Mode (Click to configure)";
+    }
+}
