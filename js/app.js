@@ -537,6 +537,7 @@ function checkLoginState() {
     const appContainer = document.getElementById("app-container");
     const loginContainer = document.getElementById("login-container");
     const roleSwitcher = document.querySelector(".role-switcher-container");
+    const dbConfigToggle = document.getElementById("db-config-toggle");
 
     if (WelfareStore.isSupabaseEnabled) {
         const hasSession = localStorage.getItem("lajna_active_session_profile");
@@ -563,23 +564,28 @@ function checkLoginState() {
                     const activeRole = WelfareStore.getActiveRole();
                     buildSimulationSelectors(activeRole);
                 }
+                if (dbConfigToggle) dbConfigToggle.style.display = "inline-flex";
             } else {
                 if (roleSwitcher) roleSwitcher.style.display = "none";
+                if (dbConfigToggle) dbConfigToggle.style.display = "none";
             }
             
             switchRoleContext(ctx.role);
         } else {
             if (roleSwitcher) roleSwitcher.style.display = "none";
+            if (dbConfigToggle) dbConfigToggle.style.display = "none";
             appContainer.style.display = "none";
             loginContainer.style.display = "flex";
         }
     } else {
         // Show mock switcher in offline mock mode
         if (roleSwitcher) roleSwitcher.style.display = "flex";
+        if (dbConfigToggle) dbConfigToggle.style.display = "inline-flex";
         appContainer.style.display = "flex";
         loginContainer.style.display = "none";
     }
 }
+
 
 
 function initLoginUI() {
