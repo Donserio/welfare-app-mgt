@@ -120,21 +120,26 @@ ALTER TABLE public.beneficiaries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
 -- 1. Regions: Readable by everyone authenticated
+DROP POLICY IF EXISTS "Allow public read on regions" ON public.regions;
 CREATE POLICY "Allow public read on regions" ON public.regions 
     FOR SELECT USING (true);
 
 -- 2. Districts: Readable by everyone authenticated
+DROP POLICY IF EXISTS "Allow public read on districts" ON public.districts;
 CREATE POLICY "Allow public read on districts" ON public.districts 
     FOR SELECT USING (true);
 
 -- 3. Profiles: Readable by all authenticated users. Editable by profile owner.
+DROP POLICY IF EXISTS "Allow authenticated read on profiles" ON public.profiles;
 CREATE POLICY "Allow authenticated read on profiles" ON public.profiles 
     FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow owners to update their profile" ON public.profiles;
 CREATE POLICY "Allow owners to update their profile" ON public.profiles 
     FOR UPDATE USING (auth.uid() = id);
 
 -- 4. Reports: Scoped RLS
 -- District Secretaries: Can see/modify their own district reports
+DROP POLICY IF EXISTS "Districts report access" ON public.reports;
 CREATE POLICY "Districts report access" ON public.reports
     FOR ALL
     USING (
@@ -147,6 +152,7 @@ CREATE POLICY "Districts report access" ON public.reports
     );
 
 -- Regional Secretaries: Can read all reports inside their region and update status
+DROP POLICY IF EXISTS "Regions report access" ON public.reports;
 CREATE POLICY "Regions report access" ON public.reports
     FOR SELECT
     USING (
@@ -160,6 +166,7 @@ CREATE POLICY "Regions report access" ON public.reports
         )
     );
 
+DROP POLICY IF EXISTS "Regions report status updates" ON public.reports;
 CREATE POLICY "Regions report status updates" ON public.reports
     FOR UPDATE
     USING (
@@ -184,6 +191,7 @@ CREATE POLICY "Regions report status updates" ON public.reports
     );
 
 -- 5. Beneficiaries: Scoped access
+DROP POLICY IF EXISTS "District beneficiary access" ON public.beneficiaries;
 CREATE POLICY "District beneficiary access" ON public.beneficiaries
     FOR ALL
     USING (
@@ -195,6 +203,7 @@ CREATE POLICY "District beneficiary access" ON public.beneficiaries
         )
     );
 
+DROP POLICY IF EXISTS "Regional and National beneficiary read" ON public.beneficiaries;
 CREATE POLICY "Regional and National beneficiary read" ON public.beneficiaries
     FOR SELECT
     USING (
@@ -209,6 +218,7 @@ CREATE POLICY "Regional and National beneficiary read" ON public.beneficiaries
     );
 
 -- 6. Notifications: Scoped access
+DROP POLICY IF EXISTS "User notifications access" ON public.notifications;
 CREATE POLICY "User notifications access" ON public.notifications
     FOR ALL
     USING (
@@ -222,6 +232,7 @@ CREATE POLICY "User notifications access" ON public.notifications
             )
         )
     );
+
 
 -- ==========================================
 -- SEED DATA SETUP
