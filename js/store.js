@@ -4,14 +4,14 @@ const DEFAULT_REGIONS = [
     { id: "region-1", name: "Region 1 (Lagos)" },
     { id: "region-2", name: "Region 2 (Ogun)" },
     { id: "region-3", name: "Region 3 (Oyo)" },
-    { id: "region-4", name: "Region 4 (Osun)" },
-    { id: "region-5", name: "Region 5 (Kwara)" },
-    { id: "region-6", name: "Region 6 (Edo/Delta)" },
-    { id: "region-7", name: "Region 7 (Rivers)" },
-    { id: "region-8", name: "Region 8 (Enugu)" },
-    { id: "region-9", name: "Region 9 (Kaduna)" },
-    { id: "region-10", name: "Region 10 (Kano)" },
-    { id: "region-11", name: "Region 11 (FCT Abuja)" }
+    { id: "region-4", name: "Region 4 (Osun/Osogbo)" },
+    { id: "region-5", name: "Region 5 (Ekiti/Akoko)" },
+    { id: "region-6", name: "Region 6 (Port Harcout/Owerri/Ikot)" },
+    { id: "region-7", name: "Region 7 (Abuja/Bauchi/Jos)" },
+    { id: "region-8", name: "Region 8 (Edo/Delta/Warri)" },
+    { id: "region-9", name: "Region 9 (Kogi/Lokoja)" },
+    { id: "region-10", name: "Region 10 (Kwara/Ilorin/Lafiaji)" },
+    { id: "region-11", name: "Region 11 (Sokoto/Kebbi)" }
 ];
 
 const DEFAULT_DISTRICTS = [
@@ -34,13 +34,13 @@ const DEFAULT_DISTRICTS = [
     
     // Fallback districts for other regions
     { id: "dist-4-1", regionId: "region-4", name: "Osogbo" },
-    { id: "dist-5-1", regionId: "region-5", name: "Ilorin" },
-    { id: "dist-6-1", regionId: "region-6", name: "Benin City" },
-    { id: "dist-7-1", regionId: "region-7", name: "Port Harcourt" },
-    { id: "dist-8-1", regionId: "region-8", name: "Enugu Central" },
-    { id: "dist-9-1", regionId: "region-9", name: "Kaduna South" },
-    { id: "dist-10-1", regionId: "region-10", name: "Kano Central" },
-    { id: "dist-11-1", regionId: "region-11", name: "Gwagwalada" }
+    { id: "dist-5-1", regionId: "region-5", name: "Ado Ekiti" },
+    { id: "dist-6-1", regionId: "region-6", name: "Port Harcourt" },
+    { id: "dist-7-1", regionId: "region-7", name: "Abuja Central" },
+    { id: "dist-8-1", regionId: "region-8", name: "Benin City" },
+    { id: "dist-9-1", regionId: "region-9", name: "Lokoja" },
+    { id: "dist-10-1", regionId: "region-10", name: "Ilorin" },
+    { id: "dist-11-1", regionId: "region-11", name: "Sokoto Central" }
 ];
 
 const DEFAULT_BENEFICIARIES = [
@@ -49,7 +49,7 @@ const DEFAULT_BENEFICIARIES = [
     { id: "ben-3", name: "Aishat Yusuf", category: "Orphan", phone: "+2348154321098", address: "Ayetoro Mission House Road", districtId: "dist-2-1", status: "Active" },
     { id: "ben-4", name: "Rukayah Solihu", category: "Sick/Disabled", phone: "+2349076543210", address: "Waterfront Estate, Ogun Waterside", districtId: "dist-2-2", status: "Active" },
     { id: "ben-5", name: "Mariam Abdulsalam", category: "Widow", phone: "+2348029876543", address: "Waterfront Estate, Ogun Waterside", districtId: "dist-2-2", status: "Active" },
-    { id: "ben-6", name: "Halimah Bello", category: "Elderly", phone: "+2348050001112", address: "Sabon Gari, Kano", districtId: "dist-10-1", status: "Active" }
+    { id: "ben-6", name: "Halimah Bello", category: "Elderly", phone: "+2348050001112", address: "Sabon Gari, Ilorin", districtId: "dist-10-1", status: "Active" }
 ];
 
 const DEFAULT_REPORTS = [

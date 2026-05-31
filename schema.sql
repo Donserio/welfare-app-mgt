@@ -208,14 +208,14 @@ INSERT INTO public.regions (id, name) VALUES
 ('region-1', 'Region 1 (Lagos)'),
 ('region-2', 'Region 2 (Ogun)'),
 ('region-3', 'Region 3 (Oyo)'),
-('region-4', 'Region 4 (Osun)'),
-('region-5', 'Region 5 (Ondo)'),
-('region-6', 'Region 6 (Edo/Delta)'),
-('region-7', 'Region 7 (Kwara)'),
-('region-8', 'Region 8 (Kogi)'),
-('region-9', 'Region 9 (North Double)'),
-('region-10', 'Region 10 (Rivers/East)'),
-('region-11', 'Region 11 (FCT/Nasarawa)')
+('region-4', 'Region 4 (Osun/Osogbo)'),
+('region-5', 'Region 5 (Ekiti/Akoko)'),
+('region-6', 'Region 6 (Port Harcout/Owerri/Ikot)'),
+('region-7', 'Region 7 (Abuja/Bauchi/Jos)'),
+('region-8', 'Region 8 (Edo/Delta/Warri)'),
+('region-9', 'Region 9 (Kogi/Lokoja)'),
+('region-10', 'Region 10 (Kwara/Ilorin/Lafiaji)'),
+('region-11', 'Region 11 (Sokoto/Kebbi)')
 ON CONFLICT (id) DO NOTHING;
 
 -- Populate Districts
