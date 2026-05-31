@@ -244,6 +244,36 @@ const DEFAULT_REPORTS = [
     }
 ];
 
+const DEFAULT_NOTIFICATIONS = [
+    {
+        id: "notif-1",
+        recipientRole: "district",
+        recipientId: "dist-2-1", // Ayetoro
+        message: "Welcome to the Lajna Welfare App! You can now manage beneficiaries and file monthly reports.",
+        type: "info",
+        timestamp: "2026-05-25T08:00:00Z",
+        read: false
+    },
+    {
+        id: "notif-2",
+        recipientRole: "district",
+        recipientId: "dist-2-1", // Ayetoro
+        message: "Monthly Welfare Report for May 2026 is due by June 5, 2026.",
+        type: "warning",
+        timestamp: "2026-05-30T09:00:00Z",
+        read: false
+    },
+    {
+        id: "notif-3",
+        recipientRole: "region",
+        recipientId: "region-2", // Ogun
+        message: "Ogun Waterside District has submitted their welfare report for May 2026.",
+        type: "info",
+        timestamp: "2026-05-29T10:15:00Z",
+        read: false
+    }
+];
+
 const WelfareStore = {
     init() {
         if (!localStorage.getItem("lajna_regions")) {
@@ -260,6 +290,9 @@ const WelfareStore = {
         }
         if (!localStorage.getItem("lajna_supplementary_reports")) {
             localStorage.setItem("lajna_supplementary_reports", JSON.stringify([]));
+        }
+        if (!localStorage.getItem("lajna_notifications")) {
+            localStorage.setItem("lajna_notifications", JSON.stringify(DEFAULT_NOTIFICATIONS));
         }
         
         // Initial Active User Profile
@@ -361,6 +394,20 @@ const WelfareStore = {
             reports.push(report);
         }
         localStorage.setItem("lajna_reports", JSON.stringify(reports));
+
+        // If it was submitted (i.e. status is "pending"), add notification for Region
+        if (report.status === "pending") {
+            const district = this.getDistricts().find(d => d.id === report.districtId);
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const monthName = months[report.month - 1] || "May";
+            this.addNotification({
+                recipientRole: "region",
+                recipientId: report.regionId,
+                message: `${district ? district.name : 'A district'} has submitted a welfare report for ${monthName} ${report.year}.`,
+                type: "info"
+            });
+        }
+
         return report;
     },
 
@@ -373,6 +420,28 @@ const WelfareStore = {
                 reports[index].revisionComments = comments;
             }
             localStorage.setItem("lajna_reports", JSON.stringify(reports));
+
+            // Push notifications for approvals/revisions
+            const rep = reports[index];
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const monthName = months[rep.month - 1] || "May";
+
+            if (status === "approved") {
+                this.addNotification({
+                    recipientRole: "district",
+                    recipientId: rep.districtId,
+                    message: `Your Welfare Report for ${monthName} ${rep.year} has been Approved by the Regional Secretary.`,
+                    type: "success"
+                });
+            } else if (status === "revision") {
+                this.addNotification({
+                    recipientRole: "district",
+                    recipientId: rep.districtId,
+                    message: `Revision requested for your ${monthName} ${rep.year} Welfare Report. Reason: "${comments || 'Please verify figures'}"`,
+                    type: "warning"
+                });
+            }
+
             return reports[index];
         }
         return null;
@@ -442,6 +511,80 @@ const WelfareStore = {
             regionName: "Region 2 (Ogun)",
             districtName: "Ayetoro"
         };
+    },
+
+    deleteReport(reportId) {
+        let reports = this.getReports();
+        const rep = reports.find(r => r.id === reportId);
+        if (!rep) return false;
+        if (rep.status !== "draft") {
+            alert("Only report drafts can be deleted.");
+            return false;
+        }
+        reports = reports.filter(r => r.id !== reportId);
+        localStorage.setItem("lajna_reports", JSON.stringify(reports));
+        return true;
+    },
+
+    deleteReports(reportIds) {
+        let reports = this.getReports();
+        let deletedCount = 0;
+        let nonDraftCount = 0;
+        
+        reportIds.forEach(id => {
+            const rep = reports.find(r => r.id === id);
+            if (rep) {
+                if (rep.status === "draft") {
+                    deletedCount++;
+                } else {
+                    nonDraftCount++;
+                }
+            }
+        });
+
+        if (nonDraftCount > 0) {
+            alert(`Cannot delete ${nonDraftCount} report(s) because they have already been submitted or approved. Only drafts can be deleted.`);
+        }
+
+        if (deletedCount > 0) {
+            reports = reports.filter(r => !(reportIds.includes(r.id) && r.status === "draft"));
+            localStorage.setItem("lajna_reports", JSON.stringify(reports));
+            return true;
+        }
+        return false;
+    },
+
+    getNotifications() {
+        return JSON.parse(localStorage.getItem("lajna_notifications")) || [];
+    },
+
+    addNotification(notif) {
+        const notifs = this.getNotifications();
+        const newNotif = {
+            id: "notif-" + Date.now() + Math.random().toString(36).substr(2, 5),
+            timestamp: new Date().toISOString(),
+            read: false,
+            ...notif
+        };
+        notifs.unshift(newNotif); // Add to beginning (latest first)
+        localStorage.setItem("lajna_notifications", JSON.stringify(notifs));
+        return newNotif;
+    },
+
+    markNotificationsAsRead(role, recipientId) {
+        const notifs = this.getNotifications();
+        notifs.forEach(n => {
+            if (n.recipientRole === role && n.recipientId === recipientId) {
+                n.read = true;
+            }
+        });
+        localStorage.setItem("lajna_notifications", JSON.stringify(notifs));
+    },
+
+    clearNotifications(role, recipientId) {
+        let notifs = this.getNotifications();
+        notifs = notifs.filter(n => !(n.recipientRole === role && n.recipientId === recipientId));
+        localStorage.setItem("lajna_notifications", JSON.stringify(notifs));
     },
 
     enforcePeriodLimits(monthSelectId, yearSelectId) {

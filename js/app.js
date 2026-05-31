@@ -99,6 +99,7 @@ function buildSidebarMenu(ctx) {
         district: [
             { id: "district-dashboard-view", label: "Dashboard", icon: "fa-gauge-high" },
             { id: "report-submission-view", label: "Submit Report", icon: "fa-file-circle-plus" },
+            { id: "reports-history-view", label: "Report History", icon: "fa-history" },
             { id: "beneficiaries-view", label: "Beneficiary Registry", icon: "fa-id-card" }
         ],
         region: [
@@ -167,6 +168,7 @@ function navigateTo(viewId) {
         "regional-dashboard-view": "Regional Dashboard",
         "national-dashboard-view": "National Administrator",
         "report-submission-view": "Submit Monthly Report",
+        "reports-history-view": "Report Submission History",
         "beneficiaries-view": "Beneficiary Database",
         "reports-directory-view": "Welfare Submissions Directory",
         "supplementary-reports-view": "Supplementary Reports Portal"
@@ -182,6 +184,9 @@ function navigateTo(viewId) {
     }
     if (viewId === "supplementary-reports-view" && window.WelfareReports) {
         window.WelfareReports.initSupplementaryView();
+    }
+    if (viewId === "reports-history-view" && window.WelfareDashboard) {
+        window.WelfareDashboard.renderHistoryTable();
     }
 }
 

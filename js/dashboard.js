@@ -40,6 +40,31 @@ const WelfareDashboard = {
             WelfareExport.exportRegionalSummaryToCSV(ctx.regionId, month, year);
         });
 
+        // History View filter change events
+        document.getElementById("history-filter-status").addEventListener("change", () => this.renderHistoryTable());
+        document.getElementById("history-filter-month").addEventListener("change", () => this.renderHistoryTable());
+        document.getElementById("history-filter-year").addEventListener("change", () => this.renderHistoryTable());
+        
+        // Select All listener
+        document.getElementById("history-select-all").addEventListener("change", (e) => {
+            const checkboxes = document.querySelectorAll(".history-row-checkbox:not(:disabled)");
+            checkboxes.forEach(cb => cb.checked = e.target.checked);
+            this.toggleHistoryBulkActions();
+        });
+
+        // Bulk Delete Action listener
+        document.getElementById("history-bulk-delete-btn").addEventListener("click", () => this.deleteSelectedDrafts());
+
+        // Notifications Clear All
+        document.getElementById("dist-clear-notifs-btn").addEventListener("click", () => {
+            const ctx = WelfareStore.getCurrentContext();
+            WelfareStore.clearNotifications(ctx.role, ctx.districtId || ctx.regionId);
+            this.renderNotifications();
+        });
+
+        // Enforce chronological boundaries on History filters
+        WelfareStore.enforcePeriodLimits("history-filter-month", "history-filter-year");
+
         // Enforce chronological boundaries on filters
         WelfareStore.enforcePeriodLimits("reg-filter-month", "reg-filter-year");
         WelfareStore.enforcePeriodLimits("nat-filter-month", "nat-filter-year");
@@ -185,28 +210,30 @@ const WelfareDashboard = {
         
         if (reports.length === 0) {
             recentTable.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">No reports created yet.</td></tr>`;
-            return;
+        } else {
+            reports.forEach(r => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><strong>${this.getMonthName(r.month)} ${r.year}</strong></td>
+                    <td>${r.submittedBy || 'N/A'}</td>
+                    <td><span class="badge badge-${r.status === 'revision' ? 'revision' : (r.status === 'pending' ? 'pending' : (r.status === 'approved' ? 'approved' : 'draft'))}">${r.status.toUpperCase()}</span></td>
+                    <td>
+                        <button class="btn btn-secondary btn-sm" onclick="WelfareDashboard.viewReportDetails('${r.id}')">
+                            <i class="fa-solid fa-folder-open"></i> View
+                        </button>
+                    </td>
+                `;
+                recentTable.appendChild(tr);
+            });
         }
-
-        reports.forEach(r => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td><strong>${this.getMonthName(r.month)} ${r.year}</strong></td>
-                <td>${r.submittedBy || 'N/A'}</td>
-                <td><span class="badge badge-${r.status === 'revision' ? 'revision' : (r.status === 'pending' ? 'pending' : (r.status === 'approved' ? 'approved' : 'draft'))}">${r.status.toUpperCase()}</span></td>
-                <td>
-                    <button class="btn btn-secondary btn-sm" onclick="WelfareDashboard.viewReportDetails('${r.id}')">
-                        <i class="fa-solid fa-folder-open"></i> View
-                    </button>
-                </td>
-            `;
-            recentTable.appendChild(tr);
-        });
 
         // Setup begin button redirection
         entryBtn.onclick = () => {
             navigateTo("report-submission-view");
         };
+
+        // Render notifications
+        this.renderNotifications();
     },
 
     // -------------------------------------------------------------
@@ -927,6 +954,195 @@ const WelfareDashboard = {
         this.closeReportModal();
         this.refresh();
         alert("Report sent back to District with feedback notes.");
+    },
+
+    renderNotifications() {
+        const ctx = WelfareStore.getCurrentContext();
+        const container = document.getElementById("district-notifications-list");
+        if (!container) return;
+
+        container.innerHTML = "";
+
+        const allNotifications = WelfareStore.getNotifications();
+        const filtered = allNotifications.filter(n => 
+            n.recipientRole === ctx.role && 
+            (n.recipientId === null || n.recipientId === (ctx.districtId || ctx.regionId))
+        );
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 0.9rem;">No new notifications.</div>`;
+            return;
+        }
+
+        filtered.forEach(n => {
+            const div = document.createElement("div");
+            div.className = `notification-item notif-${n.type || 'info'}`;
+            div.style.cssText = "padding: 10px 12px; margin-bottom: 8px; border-radius: var(--radius-sm); font-size: 0.82rem; border-left: 4px solid var(--primary-light); background: var(--bg-alt); display: flex; flex-direction: column; gap: 4px;";
+            
+            // Customize colors based on type
+            if (n.type === "success") {
+                div.style.borderLeftColor = "var(--success)";
+                div.style.backgroundColor = "rgba(5, 150, 105, 0.05)";
+            } else if (n.type === "warning") {
+                div.style.borderLeftColor = "var(--warning)";
+                div.style.backgroundColor = "rgba(217, 119, 6, 0.05)";
+            } else if (n.type === "danger") {
+                div.style.borderLeftColor = "var(--danger)";
+                div.style.backgroundColor = "rgba(220, 38, 38, 0.05)";
+            }
+
+            const timeStr = new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const dateStr = new Date(n.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+            div.innerHTML = `
+                <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">
+                    <span>${n.type.toUpperCase()}</span>
+                    <span>${dateStr} ${timeStr}</span>
+                </div>
+                <div style="color: var(--text); line-height: 1.3;">${n.message}</div>
+            `;
+            container.appendChild(div);
+        });
+
+        // Mark as read
+        WelfareStore.markNotificationsAsRead(ctx.role, ctx.districtId || ctx.regionId);
+    },
+
+    renderHistoryTable() {
+        const ctx = WelfareStore.getCurrentContext();
+        const tableBody = document.getElementById("history-reports-table");
+        if (!tableBody) return;
+
+        tableBody.innerHTML = "";
+        
+        // Reset bulk selection checkbox
+        document.getElementById("history-select-all").checked = false;
+        this.toggleHistoryBulkActions();
+
+        const statusFilter = document.getElementById("history-filter-status").value;
+        const monthFilter = document.getElementById("history-filter-month").value;
+        const yearFilter = document.getElementById("history-filter-year").value;
+
+        let reports = WelfareStore.getReports().filter(r => r.districtId === ctx.districtId);
+
+        // Apply filters
+        if (statusFilter !== "all") {
+            reports = reports.filter(r => r.status === statusFilter);
+        }
+        if (monthFilter !== "all") {
+            reports = reports.filter(r => r.month == monthFilter);
+        }
+        if (yearFilter !== "all") {
+            reports = reports.filter(r => r.year == yearFilter);
+        }
+
+        if (reports.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">No matching reports found in submission history.</td></tr>`;
+            return;
+        }
+
+        reports.forEach(r => {
+            const tr = document.createElement("tr");
+            
+            // Only drafts can be selected for deletion
+            const canDelete = r.status === "draft";
+            const checkboxMarkup = canDelete 
+                ? `<input type="checkbox" class="history-row-checkbox" value="${r.id}" onclick="WelfareDashboard.toggleHistoryBulkActions()">`
+                : `<input type="checkbox" disabled class="history-row-checkbox" value="${r.id}" title="Only drafts can be bulk deleted.">`;
+
+            // Calculate closing balance
+            let closingBalStr = "₦0";
+            if (r.data && r.data.collections && r.data.collections.closingBalance !== undefined) {
+                closingBalStr = "₦" + parseFloat(r.data.collections.closingBalance).toLocaleString();
+            } else if (r.data && r.data.collections) {
+                const openVal = parseFloat(r.data.collections.openingBalance) || 0;
+                const dueVal = parseFloat(r.data.collections.dueCollected) || 0;
+                const extraVal = parseFloat(r.data.collections.donationsReceived) || 0;
+                const spendVal = (r.data.assistance || []).reduce((sum, item) => sum + (parseFloat(item.value) || 0), 0);
+                closingBalStr = "₦" + (openVal + dueVal + extraVal - spendVal).toLocaleString();
+            }
+
+            // Actions markup
+            let actionsMarkup = "";
+            if (r.status === "draft") {
+                actionsMarkup = `
+                    <button class="btn btn-secondary btn-sm" onclick="WelfareDashboard.editReport(${r.month}, ${r.year})" title="Edit Draft">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="WelfareDashboard.deleteReport('${r.id}')" title="Delete Draft">
+                        <i class="fa-solid fa-trash-can"></i> Delete
+                    </button>
+                `;
+            } else if (r.status === "revision") {
+                actionsMarkup = `
+                    <button class="btn btn-primary btn-sm" onclick="WelfareDashboard.editReport(${r.month}, ${r.year})" title="Modify and Resubmit">
+                        <i class="fa-solid fa-pen-to-square"></i> Modify
+                    </button>
+                `;
+            } else {
+                actionsMarkup = `
+                    <button class="btn btn-secondary btn-sm" onclick="WelfareDashboard.viewReportDetails('${r.id}')" title="View Details">
+                        <i class="fa-solid fa-folder-open"></i> View
+                    </button>
+                `;
+            }
+
+            tr.innerHTML = `
+                <td style="text-align: center;">${checkboxMarkup}</td>
+                <td><strong>${this.getMonthName(r.month)} ${r.year}</strong></td>
+                <td>${r.submittedBy || 'N/A'}</td>
+                <td>${closingBalStr}</td>
+                <td><span class="badge badge-${r.status === 'revision' ? 'revision' : (r.status === 'pending' ? 'pending' : (r.status === 'approved' ? 'approved' : 'draft'))}">${r.status.toUpperCase()}</span></td>
+                <td>
+                    <div style="display: flex; gap: 8px;">
+                        ${actionsMarkup}
+                    </div>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+    },
+
+    toggleHistoryBulkActions() {
+        const checkedBoxes = document.querySelectorAll(".history-row-checkbox:checked");
+        const container = document.getElementById("history-bulk-actions-container");
+        if (!container) return;
+
+        if (checkedBoxes.length > 0) {
+            container.style.display = "block";
+        } else {
+            container.style.display = "none";
+        }
+    },
+
+    deleteReport(id) {
+        if (confirm("Are you sure you want to delete this report draft? This action cannot be undone.")) {
+            if (WelfareStore.deleteReport(id)) {
+                this.refresh();
+                this.renderHistoryTable();
+            }
+        }
+    },
+
+    deleteSelectedDrafts() {
+        const checkedBoxes = document.querySelectorAll(".history-row-checkbox:checked");
+        const ids = Array.from(checkedBoxes).map(cb => cb.value);
+        if (ids.length === 0) return;
+
+        if (confirm(`Are you sure you want to delete the ${ids.length} selected draft(s)? This action cannot be undone.`)) {
+            if (WelfareStore.deleteReports(ids)) {
+                this.refresh();
+                this.renderHistoryTable();
+            }
+        }
+    },
+
+    editReport(month, year) {
+        navigateTo("report-submission-view");
+        document.getElementById("form-info-month").value = String(month);
+        document.getElementById("form-info-year").value = String(year);
+        // Force the wizard to load the draft/revision data
+        document.getElementById("form-info-month").dispatchEvent(new Event("change"));
     }
 };
 
