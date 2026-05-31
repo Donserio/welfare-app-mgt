@@ -62,6 +62,16 @@ const WelfareDashboard = {
             this.renderNotifications();
         });
 
+        // Regional Notifications Clear All
+        const regClearBtn = document.getElementById("reg-clear-notifs-btn");
+        if (regClearBtn) {
+            regClearBtn.addEventListener("click", () => {
+                const ctx = WelfareStore.getCurrentContext();
+                WelfareStore.clearNotifications(ctx.role, ctx.regionId);
+                this.renderNotifications();
+            });
+        }
+
         // Enforce chronological boundaries on History filters
         WelfareStore.enforcePeriodLimits("history-filter-month", "history-filter-year");
 
@@ -326,6 +336,9 @@ const WelfareDashboard = {
 
         // Update Regional Summary Table
         this.renderRegionalSummaryTable(approvedReports);
+
+        // Render regional notifications feed
+        this.renderNotifications();
     },
 
     renderRegionalSummaryTable(approvedReports) {
@@ -537,7 +550,20 @@ const WelfareDashboard = {
         tableBody.innerHTML = "";
 
         const ctx = WelfareStore.getCurrentContext();
-        const regionFilter = document.getElementById("dir-filter-region").value;
+        const regionSelect = document.getElementById("dir-filter-region");
+        if (regionSelect) {
+            if (ctx.role === "region") {
+                regionSelect.value = ctx.regionId;
+                regionSelect.style.display = "none";
+            } else {
+                regionSelect.style.display = "inline-block";
+                if (regionSelect.style.display === "none") {
+                    regionSelect.value = "all";
+                }
+            }
+        }
+
+        const regionFilter = regionSelect ? regionSelect.value : "all";
         const statusFilter = document.getElementById("dir-filter-status").value;
         const monthFilter = document.getElementById("dir-filter-month").value;
         const yearFilter = document.getElementById("dir-filter-year").value;
@@ -958,7 +984,9 @@ const WelfareDashboard = {
 
     renderNotifications() {
         const ctx = WelfareStore.getCurrentContext();
-        const container = document.getElementById("district-notifications-list");
+        const container = ctx.role === "region" ? 
+            (document.getElementById("regional-notifications-list") || document.getElementById("district-notifications-list")) : 
+            (document.getElementById("district-notifications-list") || document.getElementById("regional-notifications-list"));
         if (!container) return;
 
         container.innerHTML = "";
