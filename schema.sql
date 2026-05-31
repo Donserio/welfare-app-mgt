@@ -28,6 +28,30 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Trigger to automatically create a public profile when a user signs up
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, username, user_name_display, role, region_id, district_id)
+  VALUES (
+    new.id,
+    new.email,
+    COALESCE(new.raw_user_meta_data->>'user_name_display', 'Welfare Secretary'),
+    COALESCE(new.raw_user_meta_data->>'role', 'district'),
+    COALESCE(new.raw_user_meta_data->>'region_id', 'region-2'),
+    COALESCE(new.raw_user_meta_data->>'district_id', 'dist-2-1')
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger execution link (if not already existing)
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
 -- 4. MONTHLY WELFARE REPORTS TABLE
 CREATE TABLE IF NOT EXISTS public.reports (
     id TEXT PRIMARY KEY, -- e.g., 'rep-2-1-2026-05'

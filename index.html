@@ -1033,6 +1033,47 @@
         </main>
     </div>
 
+    <!-- Login Screen Layout -->
+    <div id="login-container" style="display: none; min-height: 100vh; width: 100%; justify-content: center; align-items: center; background: linear-gradient(135deg, var(--bg) 0%, var(--bg-alt) 100%); padding: 20px;">
+        <div class="dashboard-card" style="width: 100%; max-width: 420px; box-shadow: var(--shadow-lg); padding: 40px 30px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); text-align: center;">
+            <div style="margin-bottom: 24px;">
+                <div class="logo-icon" style="width: 60px; height: 60px; font-size: 1.75rem; margin: 0 auto 12px auto; display: flex; justify-content: center; align-items: center;">L</div>
+                <h2 style="font-family: var(--font-header); font-weight: 700; color: var(--text); margin-bottom: 6px; font-size: 1.5rem;">Lajna Welfare Portal</h2>
+                <p style="color: var(--text-muted); font-size: 0.85rem;">Sign in to access reporting and beneficiary databases</p>
+            </div>
+            
+            <form id="login-form">
+                <div class="form-group" style="margin-bottom: 16px; text-align: left;">
+                    <label class="form-label">Email Address <span class="required">*</span></label>
+                    <div style="position: relative;">
+                        <input type="email" class="form-control" id="login-email" required placeholder="name.welfare@lajna.ng" style="padding-left: 36px;">
+                        <i class="fa-solid fa-envelope" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem;"></i>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 20px; text-align: left;">
+                    <label class="form-label">Password <span class="required">*</span></label>
+                    <div style="position: relative;">
+                        <input type="password" class="form-control" id="login-password" required placeholder="••••••••" style="padding-left: 36px;">
+                        <i class="fa-solid fa-lock" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem;"></i>
+                    </div>
+                </div>
+
+                <div id="login-error-message" style="display: none; padding: 10px 12px; background: rgba(220, 38, 38, 0.1); color: var(--danger); border-radius: var(--radius-sm); font-size: 0.82rem; margin-bottom: 16px; text-align: left; border-left: 4px solid var(--danger);">
+                    Invalid credentials. Please try again.
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="login-submit-btn" style="width: 100%; display: inline-flex; justify-content: center; align-items: center; padding: 10px 16px; font-weight: 600; font-size: 0.95rem; margin-bottom: 16px;">
+                    Sign In
+                </button>
+            </form>
+
+            <div style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; border-top: 1px dashed var(--border); padding-top: 16px;">
+                <strong>⚠️ Notice:</strong> Access is restricted to authorized Lajna Welfare Secretaries.
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL 1: REPORT VIEW & PRINT DETAIL -->
     <div class="modal-overlay" id="report-detail-modal">
         <div class="modal-container" style="max-width: 800px;">

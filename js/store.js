@@ -312,6 +312,32 @@ const WelfareStore = {
                     this.supabaseClient = supabase.createClient(dbUrl, dbKey);
                     this.isSupabaseEnabled = true;
                     console.log("Supabase connected on init!");
+                    
+                    // Set up auth state change listener to sync profiles and layouts
+                    this.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                        if (session) {
+                            try {
+                                const { data: profile } = await this.supabaseClient
+                                    .from("profiles")
+                                    .select("*")
+                                    .eq("id", session.user.id)
+                                    .single();
+                                if (profile) {
+                                    localStorage.setItem("lajna_active_session_profile", JSON.stringify(profile));
+                                    
+                                    // Trigger dynamic layout refresh
+                                    if (window.switchRoleContext) {
+                                        window.switchRoleContext(profile.role);
+                                    }
+                                }
+                            } catch (e) {
+                                console.error("Error sync profile on auth state change:", e);
+                            }
+                        } else {
+                            localStorage.removeItem("lajna_active_session_profile");
+                        }
+                    });
+
                     this.pullAllFromBackend();
                 }
             } catch (err) {
@@ -489,6 +515,31 @@ const WelfareStore = {
 
     // Resolves current user context information
     getCurrentContext() {
+        if (this.isSupabaseEnabled) {
+            const cachedProfile = localStorage.getItem("lajna_active_session_profile");
+            if (cachedProfile) {
+                try {
+                    const prof = JSON.parse(cachedProfile);
+                    const region = this.getRegions().find(r => r.id === prof.region_id);
+                    const district = this.getDistricts().find(d => d.id === prof.district_id);
+                    
+                    return {
+                        role: prof.role,
+                        roleTitle: prof.role === "national" ? "National Welfare Administrator" : 
+                                   (prof.role === "region" ? "Regional Welfare Secretary" : "District Welfare Secretary"),
+                        userName: prof.user_name_display || "Welfare Secretary",
+                        email: prof.username,
+                        regionId: prof.region_id || null,
+                        districtId: prof.district_id || null,
+                        regionName: region ? region.name : (prof.role === "national" ? "All Regions" : "Unknown Region"),
+                        districtName: district ? district.name : (prof.role === "district" ? "Unknown District" : "All Districts")
+                    };
+                } catch (e) {
+                    console.error("Error reading cached profile:", e);
+                }
+            }
+        }
+
         const role = this.getActiveRole();
         
         if (role === "national") {
@@ -515,7 +566,6 @@ const WelfareStore = {
                 districtName: "All Districts"
             };
         } else if (role.startsWith("district-")) {
-            // format: "district-2-1" where "2-1" represents regionId and districtId combined or districtId itself
             const distId = role.replace("district-", "dist-");
             const district = this.getDistricts().find(d => d.id === distId);
             const region = district ? this.getRegions().find(r => r.id === district.regionId) : null;
@@ -532,7 +582,6 @@ const WelfareStore = {
             };
         }
         
-        // Fallback
         return {
             role: "district",
             roleTitle: "District Welfare Secretary",
@@ -968,6 +1017,64 @@ const WelfareStore = {
             window.WelfareBeneficiaries.refresh();
         }
     }
+    },
+
+    // =============================================================
+    // SUPABASE USER AUTHENTICATION CONTROLLERS
+    // =============================================================
+    async loginUser(email, password) {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) {
+            throw new Error("Supabase is not configured yet. Click the database icon in the header to connect.");
+        }
+        
+        // 1. Sign in via Supabase Auth
+        const { data, error } = await this.supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        // 2. Fetch the corresponding profile from public.profiles
+        const { data: profile, error: profileError } = await this.supabaseClient
+            .from("profiles")
+            .select("*")
+            .eq("id", data.user.id)
+            .single();
+
+        if (profileError) {
+            // Fallback default profile if trigger hasn't finished
+            const defaultProfile = {
+                id: data.user.id,
+                username: email,
+                user_name_display: data.user.user_metadata?.user_name_display || "Welfare Secretary",
+                role: data.user.user_metadata?.role || "district",
+                region_id: data.user.user_metadata?.region_id || "region-2",
+                district_id: data.user.user_metadata?.district_id || "dist-2-1"
+            };
+            await this.supabaseClient.from("profiles").upsert(defaultProfile);
+            localStorage.setItem("lajna_active_session_profile", JSON.stringify(defaultProfile));
+        } else {
+            localStorage.setItem("lajna_active_session_profile", JSON.stringify(profile));
+        }
+
+        // Sync all data from backend for this user context
+        await this.pullAllFromBackend();
+
+        return data.user;
+    },
+
+    async logoutUser() {
+        if (this.isSupabaseEnabled && this.supabaseClient) {
+            await this.supabaseClient.auth.signOut();
+        }
+        localStorage.removeItem("lajna_active_session_profile");
+        localStorage.removeItem("lajna_active_role");
+        
+        // Reload page to reset clean client cache and force login wall
+        window.location.reload();
     }
 };
 

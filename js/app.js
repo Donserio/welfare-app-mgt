@@ -21,6 +21,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 5. Setup Supabase UI panel listeners
     initSupabaseUI();
+
+    // 6. Setup Login UI listeners
+    initLoginUI();
+
+    // 7. Verify current login state
+    checkLoginState();
 });
 
 // Theme Logic
@@ -137,6 +143,25 @@ function buildSidebarMenu(ctx) {
         li.appendChild(a);
         menuContainer.appendChild(li);
     });
+
+    // Add logout item dynamically if Supabase is connected
+    if (WelfareStore.isSupabaseEnabled) {
+        const li = document.createElement("li");
+        li.className = "menu-item";
+        li.style.marginTop = "auto";
+        
+        const a = document.createElement("a");
+        a.href = "#logout";
+        a.innerHTML = `<i class="fa-solid fa-right-from-bracket" style="color: var(--danger);"></i> <span style="color: var(--danger); font-weight: 600;">Sign Out</span>`;
+        a.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (confirm("Are you sure you want to sign out?")) {
+                WelfareStore.logoutUser();
+            }
+        });
+        li.appendChild(a);
+        menuContainer.appendChild(li);
+    }
 }
 
 // Router Navigation Core
@@ -358,6 +383,8 @@ function initSupabaseUI() {
             // Sync down reports & data
             await WelfareStore.pullAllFromBackend();
 
+            checkLoginState();
+
             setTimeout(() => {
                 dbModal.classList.remove("active");
             }, 1200);
@@ -385,6 +412,7 @@ function initSupabaseUI() {
         
         // Refresh active views to display local storage data cache
         if (window.WelfareDashboard) window.WelfareDashboard.refresh();
+        checkLoginState();
     });
 
     // Initial Status Check
@@ -395,4 +423,68 @@ function initSupabaseUI() {
         dbIcon.style.color = "var(--text-muted)";
         dbIcon.title = "Offline LocalStorage Mock Mode (Click to configure)";
     }
+}
+
+function checkLoginState() {
+    const appContainer = document.getElementById("app-container");
+    const loginContainer = document.getElementById("login-container");
+    const roleSwitcher = document.querySelector(".role-switcher-container");
+
+    if (WelfareStore.isSupabaseEnabled) {
+        // Hide mock role switcher in live mode
+        if (roleSwitcher) roleSwitcher.style.display = "none";
+        
+        const hasSession = localStorage.getItem("lajna_active_session_profile");
+        if (hasSession) {
+            appContainer.style.display = "flex";
+            loginContainer.style.display = "none";
+            
+            // Build current role context
+            const ctx = WelfareStore.getCurrentContext();
+            switchRoleContext(ctx.role);
+        } else {
+            appContainer.style.display = "none";
+            loginContainer.style.display = "flex";
+        }
+    } else {
+        // Show mock switcher in offline mock mode
+        if (roleSwitcher) roleSwitcher.style.display = "flex";
+        appContainer.style.display = "flex";
+        loginContainer.style.display = "none";
+    }
+}
+
+function initLoginUI() {
+    const loginForm = document.getElementById("login-form");
+    const emailInput = document.getElementById("login-email");
+    const passwordInput = document.getElementById("login-password");
+    const errorDiv = document.getElementById("login-error-message");
+    const submitBtn = document.getElementById("login-submit-btn");
+
+    if (!loginForm) return;
+
+    loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        // Reset state
+        errorDiv.style.display = "none";
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Signing In...`;
+
+        try {
+            await WelfareStore.loginUser(email, password);
+            // Clear inputs
+            emailInput.value = "";
+            passwordInput.value = "";
+            checkLoginState();
+        } catch (err) {
+            errorDiv.textContent = `Login failed: ${err.message}`;
+            errorDiv.style.display = "block";
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Sign In";
+        }
+    });
 }
