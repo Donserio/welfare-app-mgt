@@ -20,27 +20,77 @@ const DEFAULT_DISTRICTS = [
     { id: "dist-1-2", regionId: "region-1", name: "Lagos Island" },
     { id: "dist-1-3", regionId: "region-1", name: "Ikeja" },
     { id: "dist-1-4", regionId: "region-1", name: "Apapa" },
+    { id: "dist-1-5", regionId: "region-1", name: "Surulere" },
     
     // Region 2 (Ogun) Districts
     { id: "dist-2-1", regionId: "region-2", name: "Ayetoro" },
     { id: "dist-2-2", regionId: "region-2", name: "Ogun Waterside" },
     { id: "dist-2-3", regionId: "region-2", name: "Abeokuta" },
     { id: "dist-2-4", regionId: "region-2", name: "Ijebu Ode" },
+    { id: "dist-2-5", regionId: "region-2", name: "Sagamu" },
     
     // Region 3 (Oyo) Districts
     { id: "dist-3-1", regionId: "region-3", name: "Ibadan North" },
     { id: "dist-3-2", regionId: "region-3", name: "Ibadan South" },
     { id: "dist-3-3", regionId: "region-3", name: "Oyo Town" },
+    { id: "dist-3-4", regionId: "region-3", name: "Ogbomoso" },
+    { id: "dist-3-5", regionId: "region-3", name: "Eruwa" },
     
-    // Fallback districts for other regions
+    // Region 4 (Osun/Osogbo) Districts
     { id: "dist-4-1", regionId: "region-4", name: "Osogbo" },
+    { id: "dist-4-2", regionId: "region-4", name: "Ile-Ife" },
+    { id: "dist-4-3", regionId: "region-4", name: "Ilesa" },
+    { id: "dist-4-4", regionId: "region-4", name: "Ede" },
+    { id: "dist-4-5", regionId: "region-4", name: "Ikirun" },
+
+    // Region 5 (Ekiti/Akoko) Districts
     { id: "dist-5-1", regionId: "region-5", name: "Ado Ekiti" },
+    { id: "dist-5-2", regionId: "region-5", name: "Ikole" },
+    { id: "dist-5-3", regionId: "region-5", name: "Oye" },
+    { id: "dist-5-4", regionId: "region-5", name: "Ikere" },
+    { id: "dist-5-5", regionId: "region-5", name: "Akoko Town" },
+
+    // Region 6 (Port Harcout/Owerri/Ikot) Districts
     { id: "dist-6-1", regionId: "region-6", name: "Port Harcourt" },
+    { id: "dist-6-2", regionId: "region-6", name: "Owerri" },
+    { id: "dist-6-3", regionId: "region-6", name: "Ikot Ekpene" },
+    { id: "dist-6-4", regionId: "region-6", name: "Aba" },
+    { id: "dist-6-5", regionId: "region-6", name: "Uyo" },
+
+    // Region 7 (Abuja/Bauchi/Jos) Districts
     { id: "dist-7-1", regionId: "region-7", name: "Abuja Central" },
+    { id: "dist-7-2", regionId: "region-7", name: "Gwagwalada" },
+    { id: "dist-7-3", regionId: "region-7", name: "Bauchi Town" },
+    { id: "dist-7-4", regionId: "region-7", name: "Jos North" },
+    { id: "dist-7-5", regionId: "region-7", name: "Jos South" },
+
+    // Region 8 (Edo/Delta/Warri) Districts
     { id: "dist-8-1", regionId: "region-8", name: "Benin City" },
+    { id: "dist-8-2", regionId: "region-8", name: "Warri" },
+    { id: "dist-8-3", regionId: "region-8", name: "Asaba" },
+    { id: "dist-8-4", regionId: "region-8", name: "Sapele" },
+    { id: "dist-8-5", regionId: "region-8", name: "Uromi" },
+
+    // Region 9 (Kogi/Lokoja) Districts
     { id: "dist-9-1", regionId: "region-9", name: "Lokoja" },
+    { id: "dist-9-2", regionId: "region-9", name: "Okene" },
+    { id: "dist-9-3", regionId: "region-9", name: "Kabba" },
+    { id: "dist-9-4", regionId: "region-9", name: "Idah" },
+    { id: "dist-9-5", regionId: "region-9", name: "Ankpa" },
+
+    // Region 10 (Kwara/Ilorin/Lafiaji) Districts
     { id: "dist-10-1", regionId: "region-10", name: "Ilorin" },
-    { id: "dist-11-1", regionId: "region-11", name: "Sokoto Central" }
+    { id: "dist-10-2", regionId: "region-10", name: "Lafiaji" },
+    { id: "dist-10-3", regionId: "region-10", name: "Offa" },
+    { id: "dist-10-4", regionId: "region-10", name: "Omu-Aran" },
+    { id: "dist-10-5", regionId: "region-10", name: "Patigi" },
+
+    // Region 11 (Sokoto/Kebbi) Districts
+    { id: "dist-11-1", regionId: "region-11", name: "Sokoto Central" },
+    { id: "dist-11-2", regionId: "region-11", name: "Birnin Kebbi" },
+    { id: "dist-11-3", regionId: "region-11", name: "Argungu" },
+    { id: "dist-11-4", regionId: "region-11", name: "Wurno" },
+    { id: "dist-11-5", regionId: "region-11", name: "Gwandu" }
 ];
 
 const DEFAULT_BENEFICIARIES = [

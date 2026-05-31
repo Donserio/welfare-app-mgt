@@ -244,10 +244,70 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Populate Districts
 INSERT INTO public.districts (id, region_id, name) VALUES
+-- Region 1 (Lagos)
+('dist-1-1', 'region-1', 'Lagos Mainland'),
+('dist-1-2', 'region-1', 'Lagos Island'),
+('dist-1-3', 'region-1', 'Ikeja'),
+('dist-1-4', 'region-1', 'Apapa'),
+('dist-1-5', 'region-1', 'Surulere'),
+-- Region 2 (Ogun)
 ('dist-2-1', 'region-2', 'Ayetoro'),
 ('dist-2-2', 'region-2', 'Ogun Waterside'),
-('dist-2-3', 'region-2', 'Ijebu Ode'),
-('dist-1-1', 'region-1', 'Lagos Island'),
-('dist-1-2', 'region-1', 'Ikeja'),
-('dist-3-1', 'region-3', 'Ibadan North')
+('dist-2-3', 'region-2', 'Abeokuta'),
+('dist-2-4', 'region-2', 'Ijebu Ode'),
+('dist-2-5', 'region-2', 'Sagamu'),
+-- Region 3 (Oyo)
+('dist-3-1', 'region-3', 'Ibadan North'),
+('dist-3-2', 'region-3', 'Ibadan South'),
+('dist-3-3', 'region-3', 'Oyo Town'),
+('dist-3-4', 'region-3', 'Ogbomoso'),
+('dist-3-5', 'region-3', 'Eruwa'),
+-- Region 4 (Osun/Osogbo)
+('dist-4-1', 'region-4', 'Osogbo'),
+('dist-4-2', 'region-4', 'Ile-Ife'),
+('dist-4-3', 'region-4', 'Ilesa'),
+('dist-4-4', 'region-4', 'Ede'),
+('dist-4-5', 'region-4', 'Ikirun'),
+-- Region 5 (Ekiti/Akoko)
+('dist-5-1', 'region-5', 'Ado Ekiti'),
+('dist-5-2', 'region-5', 'Ikole'),
+('dist-5-3', 'region-5', 'Oye'),
+('dist-5-4', 'region-5', 'Ikere'),
+('dist-5-5', 'region-5', 'Akoko Town'),
+-- Region 6 (Port Harcout/Owerri/Ikot)
+('dist-6-1', 'region-6', 'Port Harcourt'),
+('dist-6-2', 'region-6', 'Owerri'),
+('dist-6-3', 'region-6', 'Ikot Ekpene'),
+('dist-6-4', 'region-6', 'Aba'),
+('dist-6-5', 'region-6', 'Uyo'),
+-- Region 7 (Abuja/Bauchi/Jos)
+('dist-7-1', 'region-7', 'Abuja Central'),
+('dist-7-2', 'region-7', 'Gwagwalada'),
+('dist-7-3', 'region-7', 'Bauchi Town'),
+('dist-7-4', 'region-7', 'Jos North'),
+('dist-7-5', 'region-7', 'Jos South'),
+-- Region 8 (Edo/Delta/Warri)
+('dist-8-1', 'region-8', 'Benin City'),
+('dist-8-2', 'region-8', 'Warri'),
+('dist-8-3', 'region-8', 'Asaba'),
+('dist-8-4', 'region-8', 'Sapele'),
+('dist-8-5', 'region-8', 'Uromi'),
+-- Region 9 (Kogi/Lokoja)
+('dist-9-1', 'region-9', 'Lokoja'),
+('dist-9-2', 'region-9', 'Okene'),
+('dist-9-3', 'region-9', 'Kabba'),
+('dist-9-4', 'region-9', 'Idah'),
+('dist-9-5', 'region-9', 'Ankpa'),
+-- Region 10 (Kwara/Ilorin/Lafiaji)
+('dist-10-1', 'region-10', 'Ilorin'),
+('dist-10-2', 'region-10', 'Lafiaji'),
+('dist-10-3', 'region-10', 'Offa'),
+('dist-10-4', 'region-10', 'Omu-Aran'),
+('dist-10-5', 'region-10', 'Patigi'),
+-- Region 11 (Sokoto/Kebbi)
+('dist-11-1', 'region-11', 'Sokoto Central'),
+('dist-11-2', 'region-11', 'Birnin Kebbi'),
+('dist-11-3', 'region-11', 'Argungu'),
+('dist-11-4', 'region-11', 'Wurno'),
+('dist-11-5', 'region-11', 'Gwandu')
 ON CONFLICT (id) DO NOTHING;
