@@ -226,7 +226,7 @@ const WelfareDashboard = {
                 tr.innerHTML = `
                     <td><strong>${this.getMonthName(r.month)} ${r.year}</strong></td>
                     <td>${r.submittedBy || 'N/A'}</td>
-                    <td><span class="badge badge-${r.status === 'revision' ? 'revision' : (r.status === 'pending' ? 'pending' : (r.status === 'approved' ? 'approved' : 'draft'))}">${r.status.toUpperCase()}</span></td>
+                    <td><span class="badge badge-${r.status === 'revision' ? 'revision' : (r.status === 'pending' ? 'pending' : (r.status === 'approved' ? 'approved' : 'draft'))}">${(r.status || 'draft').toUpperCase()}</span></td>
                     <td>
                         <button class="btn btn-secondary btn-sm" onclick="WelfareDashboard.viewReportDetails('${r.id}')">
                             <i class="fa-solid fa-folder-open"></i> View
@@ -613,7 +613,7 @@ const WelfareDashboard = {
                 <td>${this.getMonthName(r.month)} ${r.year}</td>
                 <td>${r.submittedBy || '—'}</td>
                 <td><strong>₦${totalSpend.toLocaleString()}</strong></td>
-                <td><span class="badge badge-${r.status === 'revision' ? 'revision' : (r.status === 'pending' ? 'pending' : (r.status === 'approved' ? 'approved' : 'draft'))}">${r.status.toUpperCase()}</span></td>
+                <td><span class="badge badge-${r.status === 'revision' ? 'revision' : (r.status === 'pending' ? 'pending' : (r.status === 'approved' ? 'approved' : 'draft'))}">${(r.status || 'draft').toUpperCase()}</span></td>
                 <td>
                     <button class="btn btn-secondary btn-sm" onclick="WelfareDashboard.viewReportDetails('${r.id}')">
                         <i class="fa-solid fa-folder-open"></i> Open Report
@@ -1024,7 +1024,7 @@ const WelfareDashboard = {
 
             div.innerHTML = `
                 <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">
-                    <span>${n.type.toUpperCase()}</span>
+                    <span>${(n.type || 'info').toUpperCase()}</span>
                     <span>${dateStr} ${timeStr}</span>
                 </div>
                 <div style="color: var(--text); line-height: 1.3;">${n.message}</div>
@@ -1120,7 +1120,7 @@ const WelfareDashboard = {
                 <td><strong>${this.getMonthName(r.month)} ${r.year}</strong></td>
                 <td>${r.submittedBy || 'N/A'}</td>
                 <td>${closingBalStr}</td>
-                <td><span class="badge badge-${r.status === 'revision' ? 'revision' : (r.status === 'pending' ? 'pending' : (r.status === 'approved' ? 'approved' : 'draft'))}">${r.status.toUpperCase()}</span></td>
+                <td><span class="badge badge-${r.status === 'revision' ? 'revision' : (r.status === 'pending' ? 'pending' : (r.status === 'approved' ? 'approved' : 'draft'))}">${(r.status || 'draft').toUpperCase()}</span></td>
                 <td>
                     <div style="display: flex; gap: 8px;">
                         ${actionsMarkup}
