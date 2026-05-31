@@ -1148,10 +1148,67 @@ const WelfareStore = {
         }
     },
 
+    async pullRegionsFromBackend() {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) return;
+        try {
+            const { data, error } = await this.supabaseClient
+                .from('regions')
+                .select('*');
+            if (error) {
+                console.error("Pull regions error:", error);
+                return;
+            }
+            if (data) {
+                const localRegions = data.map(r => ({
+                    id: r.id,
+                    name: r.name
+                }));
+                // Sort by ID to keep consistent order (e.g. region-1, region-2)
+                localRegions.sort((a, b) => {
+                    const numA = parseInt(a.id.replace('region-', '')) || 0;
+                    const numB = parseInt(b.id.replace('region-', '')) || 0;
+                    return numA - numB;
+                });
+                localStorage.setItem("lajna_regions", JSON.stringify(localRegions));
+            }
+        } catch (err) {
+            console.error("Pull regions exception:", err);
+        }
+    },
+
+    async pullDistrictsFromBackend() {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) return;
+        try {
+            const { data, error } = await this.supabaseClient
+                .from('districts')
+                .select('*');
+            if (error) {
+                console.error("Pull districts error:", error);
+                return;
+            }
+            if (data) {
+                const localDistricts = data.map(d => ({
+                    id: d.id,
+                    regionId: d.region_id,
+                    name: d.name
+                }));
+                // Sort by ID to keep consistent order
+                localDistricts.sort((a, b) => {
+                    return a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' });
+                });
+                localStorage.setItem("lajna_districts", JSON.stringify(localDistricts));
+            }
+        } catch (err) {
+            console.error("Pull districts exception:", err);
+        }
+    },
+
     async pullAllFromBackend() {
         if (!this.isSupabaseEnabled) return;
         console.log("Syncing database with Supabase backend...");
         await Promise.all([
+            this.pullRegionsFromBackend(),
+            this.pullDistrictsFromBackend(),
             this.pullReportsFromBackend(),
             this.pullBeneficiariesFromBackend(),
             this.pullNotificationsFromBackend()
@@ -1167,6 +1224,7 @@ const WelfareStore = {
             window.WelfareBeneficiaries.refresh();
         }
     },
+
 
     // =============================================================
     // SUPABASE USER AUTHENTICATION CONTROLLERS
