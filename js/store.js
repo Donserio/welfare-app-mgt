@@ -328,7 +328,7 @@ const WelfareStore = {
     supabaseClient: null,
     isSupabaseEnabled: false,
 
-    init() {
+    async init() {
         if (!localStorage.getItem("lajna_regions")) {
             localStorage.setItem("lajna_regions", JSON.stringify(DEFAULT_REGIONS));
         }
@@ -354,47 +354,102 @@ const WelfareStore = {
         }
 
         // Initialize Supabase Client if credentials exist
-        const dbUrl = localStorage.getItem("lajna_supabase_url");
-        const dbKey = localStorage.getItem("lajna_supabase_key");
+        let dbUrl = null;
+        let dbKey = null;
+
+        try {
+            const res = await fetch("/api/config");
+            if (res.ok) {
+                const config = await res.json();
+                if (config.supabaseUrl && config.supabaseKey) {
+                    dbUrl = config.supabaseUrl;
+                    dbKey = config.supabaseKey;
+                    console.log("Supabase credentials loaded from /api/config serverless endpoint");
+                }
+            }
+        } catch (e) {
+            console.log("Could not load credentials from /api/config serverless endpoint, falling back to local configurations.");
+        }
+
+        // Fallback to localStorage
+        if (!dbUrl || !dbKey) {
+            dbUrl = localStorage.getItem("lajna_supabase_url");
+            dbKey = localStorage.getItem("lajna_supabase_key");
+        }
+
         if (dbUrl && dbKey) {
             try {
-                if (typeof supabase !== 'undefined') {
-                    this.supabaseClient = supabase.createClient(dbUrl, dbKey);
-                    this.isSupabaseEnabled = true;
-                    console.log("Supabase connected on init!");
-                    
-                    // Set up auth state change listener to sync profiles and layouts
-                    this.supabaseClient.auth.onAuthStateChange(async (event, session) => {
-                        if (session) {
-                            try {
-                                const { data: profile } = await this.supabaseClient
-                                    .from("profiles")
-                                    .select("*")
-                                    .eq("id", session.user.id)
-                                    .single();
-                                if (profile) {
-                                    localStorage.setItem("lajna_active_session_profile", JSON.stringify(profile));
-                                    
-                                    // Trigger dynamic layout refresh
-                                    if (window.switchRoleContext) {
-                                        window.switchRoleContext(profile.role);
-                                    }
-                                }
-                            } catch (e) {
-                                console.error("Error sync profile on auth state change:", e);
-                            }
-                        } else {
-                            localStorage.removeItem("lajna_active_session_profile");
-                        }
-                    });
-
-                    this.pullAllFromBackend();
-                }
+                await this.initSupabase(dbUrl, dbKey);
+                console.log("Supabase connected on init!");
             } catch (err) {
                 console.error("Failed to connect to Supabase on init:", err);
             }
         }
     },
+
+    async initSupabase(dbUrl, dbKey) {
+        if (typeof supabase === 'undefined') {
+            throw new Error("Supabase library not loaded. Ensure you are connected to the internet.");
+        }
+        this.supabaseClient = supabase.createClient(dbUrl, dbKey);
+        this.isSupabaseEnabled = true;
+
+        // Test the connection (will throw if keys are bad or tables are missing)
+        const { data, error } = await this.supabaseClient.from("regions").select("id").limit(1);
+        if (error) {
+            this.supabaseClient = null;
+            this.isSupabaseEnabled = false;
+            throw new Error(error.message);
+        }
+
+        // Verify active user session on startup
+        const { data: { session } } = await this.supabaseClient.auth.getSession();
+        if (session) {
+            try {
+                const { data: profile } = await this.supabaseClient
+                    .from("profiles")
+                    .select("*")
+                    .eq("id", session.user.id)
+                    .single();
+                if (profile) {
+                    localStorage.setItem("lajna_active_session_profile", JSON.stringify(profile));
+                    localStorage.setItem("lajna_active_role", profile.role);
+                }
+            } catch (e) {
+                console.error("Error retrieving user profile on initSupabase:", e);
+            }
+        } else {
+            localStorage.removeItem("lajna_active_session_profile");
+        }
+
+        // Set up auth state change listener to sync profiles and layouts
+        this.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            if (session) {
+                try {
+                    const { data: profile } = await this.supabaseClient
+                        .from("profiles")
+                        .select("*")
+                        .eq("id", session.user.id)
+                        .single();
+                    if (profile) {
+                        localStorage.setItem("lajna_active_session_profile", JSON.stringify(profile));
+                        // Trigger dynamic layout refresh
+                        if (window.switchRoleContext) {
+                            window.switchRoleContext(profile.role);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error syncing profile on auth state change:", e);
+                }
+            } else {
+                localStorage.removeItem("lajna_active_session_profile");
+            }
+        });
+
+        // Pull initial database tables down to local cache
+        await this.pullAllFromBackend();
+    },
+
 
     getRegions() {
         return JSON.parse(localStorage.getItem("lajna_regions")) || [];
@@ -1066,7 +1121,6 @@ const WelfareStore = {
         if (window.WelfareBeneficiaries) {
             window.WelfareBeneficiaries.refresh();
         }
-    }
     },
 
     // =============================================================
@@ -1128,6 +1182,7 @@ const WelfareStore = {
     }
 };
 
-// Initialize the store
-WelfareStore.init();
+// Initialize the store and expose the promise
+WelfareStore.initPromise = WelfareStore.init();
 window.WelfareStore = WelfareStore;
+

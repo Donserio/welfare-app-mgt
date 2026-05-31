@@ -1,6 +1,6 @@
 // Application Router, Theme Controller, and Role Switching Coordinator
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     // 0. Set dropdown defaults dynamically based on current date
     initializeDropdownDefaults();
 
@@ -9,6 +9,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 1. Initialize Theme from local storage or system preference
     initTheme();
+
+    // Wait for store initialization (which fetches serverless credentials and connects to Supabase backend)
+    if (window.WelfareStore && window.WelfareStore.initPromise) {
+        try {
+            await window.WelfareStore.initPromise;
+        } catch (e) {
+            console.error("Error waiting for WelfareStore initialization:", e);
+        }
+    }
 
     // 2. Initialize Routing & Role Coordination
     initRoleSwitcher();
@@ -355,22 +364,11 @@ function initSupabaseUI() {
         statusDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Connecting to Supabase...`;
 
         try {
-            if (typeof supabase === 'undefined') {
-                throw new Error("Supabase library not loaded. Ensure you are connected to the internet.");
-            }
-            const client = supabase.createClient(url, key);
-            
-            // Query regions table to test auth & table structures
-            const { data, error } = await client.from("regions").select("id").limit(1);
-            if (error) {
-                throw new Error(error.message);
-            }
+            await WelfareStore.initSupabase(url, key);
 
             // Connection success
             localStorage.setItem("lajna_supabase_url", url);
             localStorage.setItem("lajna_supabase_key", key);
-            WelfareStore.supabaseClient = client;
-            WelfareStore.isSupabaseEnabled = true;
 
             statusDiv.style.background = "rgba(5, 150, 105, 0.1)";
             statusDiv.style.color = "var(--success)";
@@ -379,9 +377,6 @@ function initSupabaseUI() {
             // Update UI status icon
             dbIcon.style.color = "var(--success)";
             dbIcon.title = "Connected to Supabase PostgreSQL Database";
-
-            // Sync down reports & data
-            await WelfareStore.pullAllFromBackend();
 
             checkLoginState();
 
@@ -394,6 +389,7 @@ function initSupabaseUI() {
             statusDiv.style.color = "var(--danger)";
             statusDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Connection failed: ${err.message}. Ensure your schema is built.`;
         }
+
     });
 
     // Handle Disconnect
