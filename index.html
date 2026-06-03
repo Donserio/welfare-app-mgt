@@ -1040,7 +1040,43 @@
                                     <button type="button" class="btn btn-accent" id="wizard-submit-btn" style="display: none;"><i class="fa-solid fa-paper-plane"></i> Submit Report</button>
                                 </div>
                             </div>
-                        </form>
+                </section>
+                
+                <!-- VIEW 9: USER MANAGEMENT VIEW (National Admin Only) -->
+                <section id="user-management-view" class="tab-content">
+                    <div class="dashboard-card">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;">
+                            <div>
+                                <h3 style="font-family: var(--font-header); font-weight: 700; color: var(--text); font-size: 1.2rem; margin-bottom: 4px;">User Directory & Permissions</h3>
+                                <p style="color: var(--text-muted); font-size: 0.85rem;">Manage secretary roles, regions, and districts.</p>
+                            </div>
+                            <div class="search-box" style="position: relative; max-width: 300px; width: 100%;">
+                                <input type="text" class="form-control" id="user-search-input" placeholder="Search by name or email..." style="padding-left: 36px; height: 38px;">
+                                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem;"></i>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="custom-table" id="users-directory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Region Scope</th>
+                                        <th>District Scope</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-directory-tbody">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                                            <i class="fa-solid fa-spinner fa-spin"></i> Loading user directory...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </section>
                 
@@ -1050,13 +1086,14 @@
 
     <!-- Login Screen Layout -->
     <div id="login-container" style="display: none; min-height: 100vh; width: 100%; justify-content: center; align-items: center; background: linear-gradient(135deg, var(--bg) 0%, var(--bg-alt) 100%); padding: 20px;">
-        <div class="dashboard-card" style="width: 100%; max-width: 420px; box-shadow: var(--shadow-lg); padding: 40px 30px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); text-align: center;">
+        <div class="dashboard-card" style="width: 100%; max-width: 440px; box-shadow: var(--shadow-lg); padding: 40px 30px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); text-align: center;">
             <div style="margin-bottom: 24px;">
                 <div class="logo-icon" style="width: 60px; height: 60px; font-size: 1.75rem; margin: 0 auto 12px auto; display: flex; justify-content: center; align-items: center;">L</div>
-                <h2 style="font-family: var(--font-header); font-weight: 700; color: var(--text); margin-bottom: 6px; font-size: 1.5rem;">Lajna Welfare Portal</h2>
-                <p style="color: var(--text-muted); font-size: 0.85rem;">Sign in to access reporting and beneficiary databases</p>
+                <h2 id="auth-title" style="font-family: var(--font-header); font-weight: 700; color: var(--text); margin-bottom: 6px; font-size: 1.5rem;">Lajna Welfare Portal</h2>
+                <p id="auth-subtitle" style="color: var(--text-muted); font-size: 0.85rem;">Sign in to access reporting and beneficiary databases</p>
             </div>
             
+            <!-- Login Form -->
             <form id="login-form">
                 <div class="form-group" style="margin-bottom: 16px; text-align: left;">
                     <label class="form-label">Email Address <span class="required">*</span></label>
@@ -1082,6 +1119,76 @@
                     Sign In
                 </button>
             </form>
+
+            <!-- Sign Up Form -->
+            <form id="signup-form" style="display: none;">
+                <div class="form-group" style="margin-bottom: 16px; text-align: left;">
+                    <label class="form-label">Full Name <span class="required">*</span></label>
+                    <div style="position: relative;">
+                        <input type="text" class="form-control" id="signup-name" placeholder="Amina Bello" style="padding-left: 36px;">
+                        <i class="fa-solid fa-user" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem;"></i>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px; text-align: left;">
+                    <label class="form-label">Email Address <span class="required">*</span></label>
+                    <div style="position: relative;">
+                        <input type="email" class="form-control" id="signup-email" placeholder="name.welfare@lajna.ng" style="padding-left: 36px;">
+                        <i class="fa-solid fa-envelope" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem;"></i>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 16px; text-align: left;">
+                    <label class="form-label">Password <span class="required">*</span></label>
+                    <div style="position: relative;">
+                        <input type="password" class="form-control" id="signup-password" placeholder="••••••••" style="padding-left: 36px;">
+                        <i class="fa-solid fa-lock" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem;"></i>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px; text-align: left;">
+                    <label class="form-label">Role <span class="required">*</span></label>
+                    <div style="position: relative;">
+                        <select class="form-control" id="signup-role" style="padding-left: 36px;">
+                            <option value="district">District Secretary</option>
+                            <option value="region">Regional Secretary</option>
+                        </select>
+                        <i class="fa-solid fa-user-tag" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem;"></i>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px; text-align: left;" id="signup-region-group">
+                    <label class="form-label">Region Scope <span class="required">*</span></label>
+                    <div style="position: relative;">
+                        <select class="form-control" id="signup-region" style="padding-left: 36px;">
+                            <!-- Dynamically populated -->
+                        </select>
+                        <i class="fa-solid fa-map" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem;"></i>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px; text-align: left;" id="signup-district-group">
+                    <label class="form-label">District Scope <span class="required">*</span></label>
+                    <div style="position: relative;">
+                        <select class="form-control" id="signup-district" style="padding-left: 36px;">
+                            <!-- Dynamically populated -->
+                        </select>
+                        <i class="fa-solid fa-map-pin" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem;"></i>
+                    </div>
+                </div>
+
+                <div id="signup-error-message" style="display: none; padding: 10px 12px; background: rgba(220, 38, 38, 0.1); color: var(--danger); border-radius: var(--radius-sm); font-size: 0.82rem; margin-bottom: 16px; text-align: left; border-left: 4px solid var(--danger);">
+                    Registration failed. Please try again.
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="signup-submit-btn" style="width: 100%; display: inline-flex; justify-content: center; align-items: center; padding: 10px 16px; font-weight: 600; font-size: 0.95rem; margin-bottom: 16px;">
+                    Create Account
+                </button>
+            </form>
+
+            <div id="auth-toggle-container" style="margin-bottom: 16px; font-size: 0.85rem; color: var(--text-muted);">
+                Don't have an account? <a href="#" id="auth-toggle-link" style="color: var(--primary); font-weight: 600; text-decoration: none;">Sign Up</a>
+            </div>
 
             <div style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; border-top: 1px dashed var(--border); padding-top: 16px;">
                 <strong>⚠️ Notice:</strong> Access is restricted to authorized Lajna Welfare Secretaries.
@@ -1174,6 +1281,52 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" id="cancel-revision-btn">Cancel</button>
                     <button type="submit" class="btn btn-danger" id="submit-revision-btn">Send Back to District</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3.5: USER PROFILE EDIT MODAL -->
+    <div class="modal-overlay" id="user-edit-modal">
+        <div class="modal-container" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>Edit User Role & Scope</h3>
+                <button class="modal-close-btn" id="close-user-edit-modal">&times;</button>
+            </div>
+            <form id="user-edit-form" onsubmit="event.preventDefault();">
+                <input type="hidden" id="edit-user-id">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="edit-user-name" required>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label class="form-label">Role <span class="required">*</span></label>
+                        <select class="form-control" id="edit-user-role" required>
+                            <option value="district">District Secretary</option>
+                            <option value="region">Regional Secretary</option>
+                            <option value="national">National Administrator</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 16px;" id="edit-user-region-group">
+                        <label class="form-label">Region Scope <span class="required">*</span></label>
+                        <select class="form-control" id="edit-user-region" required>
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 16px;" id="edit-user-district-group">
+                        <label class="form-label">District Scope <span class="required">*</span></label>
+                        <select class="form-control" id="edit-user-district" required>
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancel-user-edit-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="save-user-edit-btn">Save Changes</button>
                 </div>
             </form>
         </div>

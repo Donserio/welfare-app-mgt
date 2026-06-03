@@ -129,13 +129,16 @@ DROP POLICY IF EXISTS "Allow public read on districts" ON public.districts;
 CREATE POLICY "Allow public read on districts" ON public.districts 
     FOR SELECT USING (true);
 
--- 3. Profiles: Readable by all authenticated users. Editable by profile owner.
+-- 3. Profiles: Readable by all authenticated users. Editable by profile owner or national admin.
 DROP POLICY IF EXISTS "Allow authenticated read on profiles" ON public.profiles;
 CREATE POLICY "Allow authenticated read on profiles" ON public.profiles 
     FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Allow owners to update their profile" ON public.profiles;
 CREATE POLICY "Allow owners to update their profile" ON public.profiles 
-    FOR UPDATE USING (auth.uid() = id);
+    FOR UPDATE USING (
+        auth.uid() = id OR 
+        (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'national'
+    );
 
 -- 4. Reports: Scoped RLS
 -- District Secretaries: Can see/modify their own district reports
@@ -322,3 +325,42 @@ INSERT INTO public.districts (id, region_id, name) VALUES
 ('dist-11-4', 'region-11', 'Wurno'),
 ('dist-11-5', 'region-11', 'Gwandu')
 ON CONFLICT (id) DO NOTHING;
+
+
+-- ==========================================
+-- 8. REPORT COMMENTS TABLE
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS public.report_comments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    report_id TEXT NOT NULL REFERENCES public.reports(id) ON DELETE CASCADE,
+    author_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    author_name TEXT NOT NULL,
+    comment_text TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.report_comments ENABLE ROW LEVEL SECURITY;
+
+-- 1. Read comments policy:
+-- District, Regional, and National users can read comments for reports they have access to
+DROP POLICY IF EXISTS "Allow read access to report comments" ON public.report_comments;
+CREATE POLICY "Allow read access to report comments" ON public.report_comments
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM public.reports
+            WHERE public.reports.id = public.report_comments.report_id
+        )
+    );
+
+-- 2. Insert comments policy:
+-- Users can insert comments if they have access to the report
+DROP POLICY IF EXISTS "Allow insert access to report comments" ON public.report_comments;
+CREATE POLICY "Allow insert access to report comments" ON public.report_comments
+    FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.reports
+            WHERE public.reports.id = public.report_comments.report_id
+        )
+    );
+

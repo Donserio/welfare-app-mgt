@@ -80,6 +80,17 @@ const WelfareDashboard = {
         WelfareStore.enforcePeriodLimits("nat-filter-month", "nat-filter-year");
         WelfareStore.enforcePeriodLimits("dir-filter-month", "dir-filter-year");
 
+        // User Profile Edit Modal controls
+        document.getElementById("close-user-edit-modal").addEventListener("click", () => this.closeUserEditModal());
+        document.getElementById("cancel-user-edit-btn").addEventListener("click", () => this.closeUserEditModal());
+        document.getElementById("user-edit-form").addEventListener("submit", (e) => {
+            e.preventDefault();
+            this.saveUserProfileEdit();
+        });
+        document.getElementById("edit-user-region").addEventListener("change", () => this.updateUserEditDistricts());
+        document.getElementById("edit-user-role").addEventListener("change", () => this.adjustUserEditScopeFields());
+        document.getElementById("user-search-input").addEventListener("input", () => this.renderUsersDirectory());
+
         window.WelfareDashboard = this;
     },
 
@@ -892,11 +903,31 @@ const WelfareDashboard = {
                 </table>
 
                 <div class="report-section-title">9. Key Achievements & Notes</div>
-                <div style="background-color: var(--bg-alt); padding: 16px; border-radius: var(--radius-md); border:1px solid var(--border); font-size:0.9rem;">
+                <div style="background-color: var(--bg-alt); padding: 16px; border-radius: var(--radius-md); border:1px solid var(--border); font-size:0.9rem; margin-bottom: 20px;">
                     <p style="margin-bottom:10px;"><strong>Achievements / Success Stories:</strong><br>${report.data.summary.achievements || 'None'}</p>
                     <p style="margin-bottom:10px;"><strong>Challenges Encountered:</strong><br>${report.data.summary.challenges || 'None'}</p>
                     <p style="margin-bottom:10px;"><strong>Support Required:</strong><br>${report.data.summary.supportNeeded || 'None'}</p>
-                    <p><strong>Remarks / Remarks:</strong><br>${report.data.summary.remarks || 'None'}</p>
+                    <p><strong>Remarks:</strong><br>${report.data.summary.remarks || 'None'}</p>
+                </div>
+
+                <!-- Clarification Comments Chat Section -->
+                <div class="report-comments-section" style="margin-top: 30px; border-top: 1px dashed var(--border); padding-top: 20px;">
+                    <h3 style="font-family: var(--font-header); font-size: 1.1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-comments" style="color: var(--primary);"></i> Clarification Chat Thread
+                    </h3>
+                    
+                    <div class="comments-chat-box" id="modal-report-comments-box" style="max-height: 250px; overflow-y: auto; background: var(--bg-alt); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 12px; display: flex; flex-direction: column; gap: 12px;">
+                        <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 10px;">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Loading conversation...
+                        </div>
+                    </div>
+
+                    <form id="modal-report-comment-form" style="display: flex; gap: 8px;">
+                        <input type="text" class="form-control" id="modal-report-comment-input" required placeholder="Type a clarification message..." style="flex: 1; height: 38px;">
+                        <button type="submit" class="btn btn-primary" id="modal-report-comment-send" style="height: 38px; display: inline-flex; align-items: center; justify-content: center; width: 44px; min-width: 44px; padding: 0;">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
                 </div>
 
             </div>
@@ -936,11 +967,122 @@ const WelfareDashboard = {
         closeBtn.onclick = () => this.closeReportModal();
         footerContainer.appendChild(closeBtn);
 
+        this.initReportComments(report.id);
         document.getElementById("report-detail-modal").classList.add("active");
     },
 
     closeReportModal() {
+        if (this.commentsInterval) {
+            clearInterval(this.commentsInterval);
+            this.commentsInterval = null;
+        }
         document.getElementById("report-detail-modal").classList.remove("active");
+    },
+
+    commentsInterval: null,
+
+    async initReportComments(reportId) {
+        if (this.commentsInterval) {
+            clearInterval(this.commentsInterval);
+        }
+
+        // Render initially
+        await this.renderReportComments(reportId);
+
+        // Bind comment form submit listener
+        const form = document.getElementById("modal-report-comment-form");
+        if (form) {
+            const newForm = form.cloneNode(true);
+            form.parentNode.replaceChild(newForm, form);
+
+            newForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const input = document.getElementById("modal-report-comment-input");
+                const sendBtn = document.getElementById("modal-report-comment-send");
+                const commentText = input.value.trim();
+
+                if (!commentText) return;
+
+                sendBtn.disabled = true;
+                sendBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+
+                try {
+                    await WelfareStore.addComment(reportId, commentText);
+                    input.value = "";
+                    await this.renderReportComments(reportId);
+                } catch (err) {
+                    alert(`Failed to send message: ${err.message}`);
+                } finally {
+                    sendBtn.disabled = false;
+                    sendBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i>`;
+                }
+            });
+        }
+
+        // Set up 5s polling for auto-refresh
+        this.commentsInterval = setInterval(() => {
+            this.renderReportComments(reportId, true);
+        }, 5000);
+    },
+
+    async renderReportComments(reportId, silent = false) {
+        const chatBox = document.getElementById("modal-report-comments-box");
+        if (!chatBox) return;
+
+        if (!silent) {
+            chatBox.innerHTML = `
+                <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 10px;">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Loading conversation...
+                </div>
+            `;
+        }
+
+        try {
+            const comments = await WelfareStore.getComments(reportId);
+            const activeProfile = JSON.parse(localStorage.getItem("lajna_active_session_profile"));
+            const currentUserId = activeProfile ? activeProfile.id : null;
+
+            if (comments.length === 0) {
+                chatBox.innerHTML = `
+                    <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 15px; background: var(--bg-alt); border-radius: var(--radius-sm); border: 1px dashed var(--border);">
+                        No comments yet. Start the conversation below.
+                    </div>
+                `;
+                return;
+            }
+
+            chatBox.innerHTML = "";
+            comments.forEach(c => {
+                const isMe = c.author_id === currentUserId;
+                const bubble = document.createElement("div");
+                
+                const alignStyle = isMe ? "margin-left: auto; background: var(--primary); color: white;" : "margin-right: auto; background: var(--surface); border: 1px solid var(--border);";
+                const maxWidth = "max-width: 80%; padding: 10px 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); font-size: 0.88rem; line-height: 1.4;";
+                const borderRad = isMe ? "border-bottom-right-radius: 2px;" : "border-bottom-left-radius: 2px;";
+
+                const timeStr = new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const dateStr = new Date(c.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+                bubble.style.cssText = `${alignStyle} ${maxWidth} ${borderRad}`;
+                bubble.innerHTML = `
+                    <div style="font-weight: 700; font-size: 0.72rem; margin-bottom: 4px; color: ${isMe ? 'rgba(255,255,255,0.85)' : 'var(--text-muted)'};">
+                        ${c.author_name}
+                    </div>
+                    <div style="word-break: break-word;">${c.comment_text}</div>
+                    <div style="text-align: right; font-size: 0.68rem; margin-top: 4px; color: ${isMe ? 'rgba(255,255,255,0.7)' : 'var(--text-light)'};">
+                        ${dateStr} ${timeStr}
+                    </div>
+                `;
+                chatBox.appendChild(bubble);
+            });
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        } catch (e) {
+            console.error("Failed to render report comments:", e);
+            if (!silent) {
+                chatBox.innerHTML = `<div style="text-align: center; color: var(--danger); font-size: 0.85rem; padding: 10px;">Failed to load comments: ${e.message}</div>`;
+            }
+        }
     },
 
     // Approval Actions
@@ -975,6 +1117,15 @@ const WelfareDashboard = {
         }
 
         WelfareStore.updateReportStatus(reportId, "revision", feedback);
+        
+        // Add revision comment to the two-way message board thread
+        WelfareStore.addComment(reportId, `Revision Requested: ${feedback}`).then(() => {
+            if (this.activeReportIdInModal === reportId) {
+                this.renderReportComments(reportId);
+            }
+        }).catch(err => {
+            console.error("Failed to post initial revision comment:", err);
+        });
         
         this.closeRevisionModal();
         this.closeReportModal();
@@ -1171,6 +1322,213 @@ const WelfareDashboard = {
         document.getElementById("form-info-year").value = String(year);
         // Force the wizard to load the draft/revision data
         document.getElementById("form-info-month").dispatchEvent(new Event("change"));
+    },
+
+    usersList: [],
+
+    async initUserManagementView() {
+        try {
+            document.getElementById("users-directory-tbody").innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Fetching profiles...
+                    </td>
+                </tr>
+            `;
+
+            // Populate Region Select in the modal (one-time setup)
+            const regions = WelfareStore.getRegions();
+            const editRegionSelect = document.getElementById("edit-user-region");
+            editRegionSelect.innerHTML = "";
+            regions.forEach(r => {
+                const opt = document.createElement("option");
+                opt.value = r.id;
+                opt.textContent = r.name;
+                editRegionSelect.appendChild(opt);
+            });
+
+            this.usersList = await WelfareStore.getProfiles();
+            this.renderUsersDirectory();
+        } catch (e) {
+            console.error("Error loading user directory:", e);
+            document.getElementById("users-directory-tbody").innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; color: var(--danger); padding: 20px;">
+                        <i class="fa-solid fa-circle-xmark"></i> Failed to load profiles: ${e.message}
+                    </td>
+                </tr>
+            `;
+        }
+    },
+
+    renderUsersDirectory() {
+        const tbody = document.getElementById("users-directory-tbody");
+        const searchText = (document.getElementById("user-search-input").value || "").toLowerCase().trim();
+        
+        const regions = WelfareStore.getRegions();
+        const districts = WelfareStore.getDistricts();
+
+        // Filter users
+        const filtered = this.usersList.filter(user => {
+            const name = (user.user_name_display || "").toLowerCase();
+            const email = (user.username || "").toLowerCase();
+            return name.includes(searchText) || email.includes(searchText);
+        });
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                        No users found.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = "";
+        filtered.forEach(user => {
+            const tr = document.createElement("tr");
+
+            // Role Badge
+            let roleBadge = "";
+            if (user.role === "national") {
+                roleBadge = `<span class="badge badge-accent"><i class="fa-solid fa-crown"></i> National</span>`;
+            } else if (user.role === "region") {
+                roleBadge = `<span class="badge badge-primary"><i class="fa-solid fa-map"></i> Region</span>`;
+            } else {
+                roleBadge = `<span class="badge badge-secondary"><i class="fa-solid fa-building"></i> District</span>`;
+            }
+
+            // Scope descriptions
+            const region = regions.find(r => r.id === user.region_id);
+            const district = districts.find(d => d.id === user.district_id);
+
+            const regionName = region ? region.name : (user.role === "national" ? "All Regions" : "None");
+            const districtName = district ? district.name : (user.role === "national" || user.role === "region" ? "All Districts" : "None");
+
+            tr.innerHTML = `
+                <td><strong>${user.user_name_display || "Welfare Secretary"}</strong></td>
+                <td>${user.username}</td>
+                <td>${roleBadge}</td>
+                <td>${regionName}</td>
+                <td>${districtName}</td>
+                <td>
+                    <button class="btn btn-secondary btn-sm edit-user-btn" style="padding: 4px 8px; font-size: 0.8rem;">
+                        <i class="fa-solid fa-user-pen"></i> Edit
+                    </button>
+                </td>
+            `;
+
+            // Click listener
+            tr.querySelector(".edit-user-btn").addEventListener("click", () => this.openUserEditModal(user));
+
+            tbody.appendChild(tr);
+        });
+    },
+
+    openUserEditModal(user) {
+        document.getElementById("edit-user-id").value = user.id;
+        document.getElementById("edit-user-name").value = user.user_name_display || "";
+        document.getElementById("edit-user-role").value = user.role || "district";
+        
+        if (user.region_id) {
+            document.getElementById("edit-user-region").value = user.region_id;
+        }
+        
+        this.adjustUserEditScopeFields();
+        this.updateUserEditDistricts();
+
+        if (user.district_id) {
+            document.getElementById("edit-user-district").value = user.district_id;
+        }
+
+        document.getElementById("user-edit-modal").classList.add("active");
+    },
+
+    closeUserEditModal() {
+        document.getElementById("user-edit-modal").classList.remove("active");
+    },
+
+    adjustUserEditScopeFields() {
+        const role = document.getElementById("edit-user-role").value;
+        const regionGroup = document.getElementById("edit-user-region-group");
+        const districtGroup = document.getElementById("edit-user-district-group");
+
+        const regionSelect = document.getElementById("edit-user-region");
+        const districtSelect = document.getElementById("edit-user-district");
+
+        if (role === "national") {
+            regionGroup.style.display = "none";
+            regionSelect.required = false;
+            districtGroup.style.display = "none";
+            districtSelect.required = false;
+        } else if (role === "region") {
+            regionGroup.style.display = "block";
+            regionSelect.required = true;
+            districtGroup.style.display = "none";
+            districtSelect.required = false;
+        } else {
+            regionGroup.style.display = "block";
+            regionSelect.required = true;
+            districtGroup.style.display = "block";
+            districtSelect.required = true;
+        }
+    },
+
+    updateUserEditDistricts() {
+        const selectedRegion = document.getElementById("edit-user-region").value;
+        const districtSelect = document.getElementById("edit-user-district");
+        if (!districtSelect) return;
+        
+        const districts = WelfareStore.getDistrictsByRegion(selectedRegion);
+        districtSelect.innerHTML = "";
+        
+        districts.forEach(d => {
+            const opt = document.createElement("option");
+            opt.value = d.id;
+            opt.textContent = d.name;
+            districtSelect.appendChild(opt);
+        });
+    },
+
+    async saveUserProfileEdit() {
+        const saveBtn = document.getElementById("save-user-edit-btn");
+        const prevText = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
+
+        try {
+            const userId = document.getElementById("edit-user-id").value;
+            const name = document.getElementById("edit-user-name").value.trim();
+            const role = document.getElementById("edit-user-role").value;
+            const regionId = (role !== "national") ? document.getElementById("edit-user-region").value : null;
+            const districtId = (role === "district") ? document.getElementById("edit-user-district").value : null;
+
+            await WelfareStore.updateUserProfile(userId, {
+                user_name_display: name,
+                role: role,
+                region_id: regionId,
+                district_id: districtId
+            });
+
+            this.closeUserEditModal();
+            
+            // Reload user directory list
+            this.usersList = await WelfareStore.getProfiles();
+            this.renderUsersDirectory();
+
+            // Refresh current context if admin edited themselves
+            const activeProfile = JSON.parse(localStorage.getItem("lajna_active_session_profile"));
+            if (activeProfile && activeProfile.id === userId) {
+                window.location.reload();
+            }
+        } catch (e) {
+            alert(`Failed to save changes: ${e.message}`);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = prevText;
+        }
     }
 };
 

@@ -1334,3 +1334,38 @@ select.form-control {
         grid-template-columns: 1fr;
     }
 }
+
+/* Role and Chat Badge Styles */
+.badge-primary {
+    background-color: var(--primary-light);
+    color: var(--primary);
+}
+.badge-primary::before { background-color: var(--primary); }
+
+.badge-secondary {
+    background-color: var(--border);
+    color: var(--text);
+}
+.badge-secondary::before { background-color: var(--text-muted); }
+
+.badge-accent {
+    background-color: var(--accent-light);
+    color: var(--accent);
+}
+.badge-accent::before { background-color: var(--accent); }
+
+/* Custom Chat Box Styling */
+.comments-chat-box {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+.comments-chat-box::-webkit-scrollbar {
+    width: 6px;
+}
+.comments-chat-box::-webkit-scrollbar-track {
+    background: transparent;
+}
+.comments-chat-box::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: var(--radius-full);
+}

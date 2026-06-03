@@ -242,7 +242,8 @@ function buildSidebarMenu(ctx) {
             { id: "national-dashboard-view", label: "Dashboard", icon: "fa-globe" },
             { id: "reports-directory-view", label: "National Submissions", icon: "fa-folder-tree" },
             { id: "supplementary-reports-view", label: "Supplementary Reports", icon: "fa-folder-plus" },
-            { id: "beneficiaries-view", label: "National Beneficiaries", icon: "fa-id-card" }
+            { id: "beneficiaries-view", label: "National Beneficiaries", icon: "fa-id-card" },
+            { id: "user-management-view", label: "User Management", icon: "fa-users-gear" }
         ]
     };
 
@@ -320,7 +321,8 @@ function navigateTo(viewId) {
         "reports-history-view": "Report Submission History",
         "beneficiaries-view": "Beneficiary Database",
         "reports-directory-view": "Welfare Submissions Directory",
-        "supplementary-reports-view": "Supplementary Reports Portal"
+        "supplementary-reports-view": "Supplementary Reports Portal",
+        "user-management-view": "User Access & Management"
     };
 
     const titleElement = document.getElementById("current-view-title");
@@ -336,6 +338,9 @@ function navigateTo(viewId) {
     }
     if (viewId === "reports-history-view" && window.WelfareDashboard) {
         window.WelfareDashboard.renderHistoryTable();
+    }
+    if (viewId === "user-management-view" && window.WelfareDashboard) {
+        window.WelfareDashboard.initUserManagementView();
     }
 }
 
@@ -595,21 +600,97 @@ function initLoginUI() {
     const errorDiv = document.getElementById("login-error-message");
     const submitBtn = document.getElementById("login-submit-btn");
 
-    if (!loginForm) return;
+    const signupForm = document.getElementById("signup-form");
+    const signupName = document.getElementById("signup-name");
+    const signupEmail = document.getElementById("signup-email");
+    const signupPassword = document.getElementById("signup-password");
+    const signupRole = document.getElementById("signup-role");
+    const signupRegion = document.getElementById("signup-region");
+    const signupDistrict = document.getElementById("signup-district");
+    const signupErrorDiv = document.getElementById("signup-error-message");
+    const signupSubmitBtn = document.getElementById("signup-submit-btn");
 
+    const authToggleLink = document.getElementById("auth-toggle-link");
+    const authToggleContainer = document.getElementById("auth-toggle-container");
+    const authTitle = document.getElementById("auth-title");
+    const authSubtitle = document.getElementById("auth-subtitle");
+
+    if (!loginForm || !signupForm) return;
+
+    let isSignupMode = false;
+
+    // Toggle between login and signup
+    authToggleLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        isSignupMode = !isSignupMode;
+        if (isSignupMode) {
+            loginForm.style.display = "none";
+            signupForm.style.display = "block";
+            authTitle.textContent = "Create Account";
+            authSubtitle.textContent = "Register as a Lajna Welfare Secretary";
+            authToggleLink.textContent = "Sign In";
+            authToggleContainer.childNodes[0].textContent = "Already have an account? ";
+            populateSignupLocations();
+        } else {
+            loginForm.style.display = "block";
+            signupForm.style.display = "none";
+            authTitle.textContent = "Lajna Welfare Portal";
+            authSubtitle.textContent = "Sign in to access reporting and beneficiary databases";
+            authToggleLink.textContent = "Sign Up";
+            authToggleContainer.childNodes[0].textContent = "Don't have an account? ";
+        }
+    });
+
+    function populateSignupLocations() {
+        const regions = WelfareStore.getRegions();
+        signupRegion.innerHTML = "";
+        regions.forEach(r => {
+            const opt = document.createElement("option");
+            opt.value = r.id;
+            opt.textContent = r.name;
+            signupRegion.appendChild(opt);
+        });
+        updateSignupDistricts();
+    }
+
+    function updateSignupDistricts() {
+        const selectedRegion = signupRegion.value;
+        const districts = WelfareStore.getDistrictsByRegion(selectedRegion);
+        signupDistrict.innerHTML = "";
+        districts.forEach(d => {
+            const opt = document.createElement("option");
+            opt.value = d.id;
+            opt.textContent = d.name;
+            signupDistrict.appendChild(opt);
+        });
+    }
+
+    signupRegion.addEventListener("change", updateSignupDistricts);
+
+    signupRole.addEventListener("change", () => {
+        const role = signupRole.value;
+        const districtGroup = document.getElementById("signup-district-group");
+        if (role === "region") {
+            districtGroup.style.display = "none";
+            signupDistrict.required = false;
+        } else {
+            districtGroup.style.display = "block";
+            signupDistrict.required = true;
+        }
+    });
+
+    // Login Form Submit
     loginForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const email = emailInput.value.trim();
         const password = passwordInput.value;
 
-        // Reset state
         errorDiv.style.display = "none";
         submitBtn.disabled = true;
         submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Signing In...`;
 
         try {
             await WelfareStore.loginUser(email, password);
-            // Clear inputs
             emailInput.value = "";
             passwordInput.value = "";
             checkLoginState();
@@ -619,6 +700,35 @@ function initLoginUI() {
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = "Sign In";
+        }
+    });
+
+    // Signup Form Submit
+    signupForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = signupName.value.trim();
+        const email = signupEmail.value.trim();
+        const password = signupPassword.value;
+        const role = signupRole.value;
+        const regionId = signupRegion.value;
+        const districtId = signupDistrict.value;
+
+        signupErrorDiv.style.display = "none";
+        signupSubmitBtn.disabled = true;
+        signupSubmitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Creating Account...`;
+
+        try {
+            await WelfareStore.registerUser(email, password, name, role, regionId, districtId);
+            signupName.value = "";
+            signupEmail.value = "";
+            signupPassword.value = "";
+            checkLoginState();
+        } catch (err) {
+            signupErrorDiv.textContent = `Registration failed: ${err.message}`;
+            signupErrorDiv.style.display = "block";
+        } finally {
+            signupSubmitBtn.disabled = false;
+            signupSubmitBtn.textContent = "Create Account";
         }
     });
 }

@@ -1225,6 +1225,150 @@ const WelfareStore = {
         }
     },
 
+    async getProfiles() {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) {
+            const stored = localStorage.getItem("mock_profiles");
+            if (stored) return JSON.parse(stored);
+            
+            const mock = [
+                { id: "mock-1", username: "national.admin@lajna.ng", user_name_display: "National Admin", role: "national", region_id: null, district_id: null },
+                { id: "mock-2", username: "region2.sec@lajna.ng", user_name_display: "Region 2 Secretary", role: "region", region_id: "region-2", district_id: null },
+                { id: "mock-3", username: "ayetoro.sec@lajna.ng", user_name_display: "Ayetoro Secretary", role: "district", region_id: "region-2", district_id: "dist-2-1" }
+            ];
+            localStorage.setItem("mock_profiles", JSON.stringify(mock));
+            return mock;
+        }
+
+        try {
+            const { data, error } = await this.supabaseClient
+                .from("profiles")
+                .select("*");
+            
+            if (error) {
+                console.error("Fetch profiles error:", error);
+                throw error;
+            }
+            return data;
+        } catch (err) {
+            console.error("Fetch profiles exception:", err);
+            throw err;
+        }
+    },
+
+    async updateUserProfile(profileId, updates) {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) {
+            const stored = localStorage.getItem("mock_profiles");
+            if (stored) {
+                const list = JSON.parse(stored);
+                const idx = list.findIndex(p => p.id === profileId);
+                if (idx !== -1) {
+                    list[idx] = { ...list[idx], ...updates };
+                    localStorage.setItem("mock_profiles", JSON.stringify(list));
+                    return list[idx];
+                }
+            }
+            return null;
+        }
+
+        try {
+            const { data, error } = await this.supabaseClient
+                .from("profiles")
+                .update({
+                    user_name_display: updates.user_name_display,
+                    role: updates.role,
+                    region_id: updates.region_id,
+                    district_id: updates.district_id,
+                    updated_at: new Date().toISOString()
+                })
+                .eq("id", profileId)
+                .select()
+                .single();
+
+            if (error) {
+                console.error("Update profile error:", error);
+                throw error;
+            }
+
+            const activeProfile = JSON.parse(localStorage.getItem("lajna_active_session_profile"));
+            if (activeProfile && activeProfile.id === profileId) {
+                localStorage.setItem("lajna_active_session_profile", JSON.stringify(data));
+                localStorage.setItem("lajna_active_role", data.role);
+            }
+
+            return data;
+        } catch (err) {
+            console.error("Update profile exception:", err);
+            throw err;
+        }
+    },
+
+    async getComments(reportId) {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) {
+            const stored = localStorage.getItem(`mock_comments_${reportId}`);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        try {
+            const { data, error } = await this.supabaseClient
+                .from("report_comments")
+                .select("*")
+                .eq("report_id", reportId)
+                .order("created_at", { ascending: true });
+
+            if (error) {
+                console.error("Fetch report comments error:", error);
+                throw error;
+            }
+            return data;
+        } catch (err) {
+            console.error("Fetch report comments exception:", err);
+            throw err;
+        }
+    },
+
+    async addComment(reportId, commentText) {
+        const activeProfile = JSON.parse(localStorage.getItem("lajna_active_session_profile"));
+        if (!activeProfile) throw new Error("No active user session.");
+
+        if (!this.isSupabaseEnabled || !this.supabaseClient) {
+            const newComment = {
+                id: Math.random().toString(36).substr(2, 9),
+                report_id: reportId,
+                author_id: activeProfile.id,
+                author_name: activeProfile.user_name_display,
+                comment_text: commentText,
+                created_at: new Date().toISOString()
+            };
+            const stored = localStorage.getItem(`mock_comments_${reportId}`);
+            const list = stored ? JSON.parse(stored) : [];
+            list.push(newComment);
+            localStorage.setItem(`mock_comments_${reportId}`, JSON.stringify(list));
+            return newComment;
+        }
+
+        try {
+            const { data, error } = await this.supabaseClient
+                .from("report_comments")
+                .insert({
+                    report_id: reportId,
+                    author_id: activeProfile.id,
+                    author_name: activeProfile.user_name_display,
+                    comment_text: commentText
+                })
+                .select()
+                .single();
+
+            if (error) {
+                console.error("Add comment error:", error);
+                throw error;
+            }
+            return data;
+        } catch (err) {
+            console.error("Add comment exception:", err);
+            throw err;
+        }
+    },
+
 
     // =============================================================
     // SUPABASE USER AUTHENTICATION CONTROLLERS
@@ -1268,6 +1412,65 @@ const WelfareStore = {
         }
 
         // Sync all data from backend for this user context
+        await this.pullAllFromBackend();
+
+        return data.user;
+    },
+    
+    async registerUser(email, password, displayName, role, regionId, districtId) {
+        if (!this.isSupabaseEnabled || !this.supabaseClient) {
+            throw new Error("Supabase is not configured yet. Click the database icon in the header to connect.");
+        }
+
+        // 1. Sign up via Supabase Auth, passing metadata
+        const { data, error } = await this.supabaseClient.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+                data: {
+                    user_name_display: displayName || "Welfare Secretary",
+                    role: role || "district",
+                    region_id: regionId || null,
+                    district_id: (role === "district") ? districtId : null
+                }
+            }
+        });
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        // 2. Fetch the profile row or create fallback
+        let profile = null;
+        try {
+            const { data: prof, error: profileError } = await this.supabaseClient
+                .from("profiles")
+                .select("*")
+                .eq("id", data.user.id)
+                .single();
+            
+            if (!profileError && prof) {
+                profile = prof;
+            }
+        } catch (e) {
+            console.warn("Failed fetching profile immediately on signup:", e);
+        }
+
+        if (!profile) {
+            profile = {
+                id: data.user.id,
+                username: email,
+                user_name_display: displayName || "Welfare Secretary",
+                role: role || "district",
+                region_id: regionId || null,
+                district_id: (role === "district") ? districtId : null
+            };
+            await this.supabaseClient.from("profiles").upsert(profile);
+        }
+
+        localStorage.setItem("lajna_active_session_profile", JSON.stringify(profile));
+        
+        // Sync database records for the new context
         await this.pullAllFromBackend();
 
         return data.user;
