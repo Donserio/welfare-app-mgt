@@ -618,6 +618,7 @@ function initLoginUI() {
     if (!loginForm || !signupForm) return;
 
     let isSignupMode = false;
+    const authToggleText = document.getElementById("auth-toggle-text");
 
     // Toggle between login and signup
     authToggleLink.addEventListener("click", (e) => {
@@ -629,7 +630,7 @@ function initLoginUI() {
             authTitle.textContent = "Create Account";
             authSubtitle.textContent = "Register as a Lajna Welfare Secretary";
             authToggleLink.textContent = "Sign In";
-            authToggleContainer.childNodes[0].textContent = "Already have an account? ";
+            if (authToggleText) authToggleText.textContent = "Already have an account? ";
             populateSignupLocations();
         } else {
             loginForm.style.display = "block";
@@ -637,7 +638,7 @@ function initLoginUI() {
             authTitle.textContent = "Lajna Welfare Portal";
             authSubtitle.textContent = "Sign in to access reporting and beneficiary databases";
             authToggleLink.textContent = "Sign Up";
-            authToggleContainer.childNodes[0].textContent = "Don't have an account? ";
+            if (authToggleText) authToggleText.textContent = "Don't have an account? ";
         }
     });
 
